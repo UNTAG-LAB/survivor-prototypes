@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>情緒四象限 — 互動原型</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#0f0e17;--surface:#1a1932;--mint:#B2DFDB;--mint-glow:rgba(178,223,219,.35);
+    --q-green:rgba(74,222,128,.18);--q-yellow:rgba(251,191,36,.18);
+    --q-blue:rgba(96,165,250,.18);--q-red:rgba(248,113,113,.18);
+    --text:#fffffe;--text-dim:#94a1b2;--accent:#7f5af0;
+  }
+  html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;overflow:hidden;touch-action:manipulation;user-select:none}
+  body{display:flex;justify-content:center;align-items:center}
+
+  /* Container — phone frame */
+  #app{position:relative;width:100%;max-width:430px;height:100vh;max-height:932px;overflow:hidden;background:var(--bg)}
+
+  /* Screens */
+  .screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .6s ease}
+  .screen.active{opacity:1;pointer-events:auto}
+
+  /* ===== Screen 1: Welcome ===== */
+  #welcome{background:radial-gradient(ellipse at 50% 60%,#1e1b4b 0%,var(--bg) 70%)}
+  .welcome-icon{font-size:80px;margin-bottom:24px;animation:float 3s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  .welcome-title{font-size:32px;font-weight:900;letter-spacing:2px;margin-bottom:12px}
+  .welcome-sub{font-size:16px;color:var(--text-dim);margin-bottom:48px;text-align:center;line-height:1.6;padding:0 32px}
+  .btn{padding:16px 48px;border:none;border-radius:60px;font-size:18px;font-weight:700;font-family:inherit;cursor:pointer;transition:transform .15s,box-shadow .15s}
+  .btn:active{transform:scale(.93)}
+  .btn-primary{background:linear-gradient(135deg,#7f5af0,#2cb67d);color:#fff;box-shadow:0 4px 24px rgba(127,90,240,.35)}
+  .btn-secondary{background:rgba(255,255,255,.08);color:var(--text);border:1px solid rgba(255,255,255,.12)}
+  .btn-mint{background:linear-gradient(135deg,#2cb67d,#72efdd);color:#0f0e17;box-shadow:0 4px 24px rgba(44,182,125,.3)}
+
+  /* ===== Screen 2: Quadrant ===== */
+  #quadrant{padding:20px 16px;justify-content:flex-start;padding-top:48px}
+  .q-header{text-align:center;margin-bottom:16px}
+  .q-header h2{font-size:22px;font-weight:700;margin-bottom:4px}
+  .q-header p{font-size:13px;color:var(--text-dim)}
+  .q-container{position:relative;width:100%;aspect-ratio:1/1;max-width:380px;margin:0 auto}
+  .q-grid{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;border-radius:20px;overflow:hidden}
+  .q-cell{display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:rgba(255,255,255,.45);padding:12px;text-align:center;line-height:1.4}
+  .q-cell:nth-child(1){background:var(--q-green);border-bottom:1px solid rgba(255,255,255,.06);border-right:1px solid rgba(255,255,255,.06)}
+  .q-cell:nth-child(2){background:var(--q-yellow);border-bottom:1px solid rgba(255,255,255,.06)}
+  .q-cell:nth-child(3){background:var(--q-blue);border-right:1px solid rgba(255,255,255,.06)}
+  .q-cell:nth-child(4){background:var(--q-red)}
+  .q-cell .emoji{font-size:28px;display:block;margin-bottom:4px}
+  .q-canvas{position:absolute;inset:0;border-radius:20px;cursor:crosshair;z-index:2}
+  /* Axis labels */
+  .axis-label{position:absolute;font-size:12px;color:var(--text-dim);font-weight:700;z-index:3;pointer-events:none;white-space:nowrap}
+  .axis-y-top{top:-24px;left:50%;transform:translateX(-50%)}
+  .axis-y-bottom{bottom:-24px;left:50%;transform:translateX(-50%)}
+  .axis-x-left{left:-8px;top:50%;transform:translateY(-50%) rotate(-90deg)}
+  .axis-x-right{right:-8px;top:50%;transform:translateY(-50%) rotate(90deg)}
+  /* Crosshair */
+  .crosshair-h,.crosshair-v{position:absolute;background:rgba(255,255,255,.1);z-index:1;pointer-events:none;display:none}
+  .crosshair-h{height:1px;width:100%;top:50%}
+  .crosshair-v{width:1px;height:100%;left:50%}
+  /* My dot */
+  .my-dot{position:absolute;width:20px;height:20px;border-radius:50%;background:var(--mint);box-shadow:0 0 16px var(--mint-glow),0 0 40px var(--mint-glow);z-index:10;pointer-events:none;transform:translate(-50%,-50%) scale(0);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+  .my-dot.placed{transform:translate(-50%,-50%) scale(1)}
+  .my-dot::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--mint);opacity:.5;animation:ping 1.5s ease-out infinite}
+  @keyframes ping{0%{transform:scale(1);opacity:.5}100%{transform:scale(2.2);opacity:0}}
+  .q-readout{margin-top:20px;text-align:center;min-height:40px}
+  .q-readout .val{font-size:15px;color:var(--mint);font-weight:700;opacity:0;transition:opacity .3s}
+  .q-readout .val.show{opacity:1}
+  .q-actions{margin-top:16px;display:flex;gap:12px}
+
+  /* ===== Screen 3: Result ===== */
+  #result{padding:20px 16px;justify-content:flex-start;padding-top:36px}
+  .r-title{font-size:20px;font-weight:700;margin-bottom:16px;text-align:center}
+  .r-quadrant-wrap{position:relative;width:100%;max-width:340px;aspect-ratio:1/1;margin:0 auto 20px}
+  .r-quadrant-bg{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;border-radius:16px;overflow:hidden}
+  .r-quadrant-bg div:nth-child(1){background:var(--q-green)}
+  .r-quadrant-bg div:nth-child(2){background:var(--q-yellow)}
+  .r-quadrant-bg div:nth-child(3){background:var(--q-blue)}
+  .r-quadrant-bg div:nth-child(4){background:var(--q-red)}
+  .r-canvas{position:absolute;inset:0;border-radius:16px;z-index:2}
+  .r-my-dot{position:absolute;width:18px;height:18px;border-radius:50%;background:var(--mint);box-shadow:0 0 12px var(--mint-glow);z-index:10;pointer-events:none;transform:translate(-50%,-50%)}
+  .r-my-dot::after{content:'';position:absolute;inset:-5px;border-radius:50%;border:2px solid var(--mint);opacity:.5;animation:ping 1.5s ease-out infinite}
+  /* Stats cards */
+  .stats{width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px}
+  .stat-card{background:var(--surface);border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:14px;opacity:0;transform:translateY(12px);transition:opacity .4s ease,transform .4s ease}
+  .stat-card.show{opacity:1;transform:translateY(0)}
+  .stat-icon{font-size:32px;flex-shrink:0}
+  .stat-body{flex:1}
+  .stat-label{font-size:12px;color:var(--text-dim);margin-bottom:2px}
+  .stat-value{font-size:18px;font-weight:900}
+  .stat-value .highlight{color:var(--mint)}
+  .weather-card{background:linear-gradient(135deg,#1e1b4b,#312e81)!important;border:1px solid rgba(127,90,240,.2)}
+  .r-actions{margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+
+  /* ===== Screen 4: Trajectory ===== */
+  #trajectory{padding:20px 16px;justify-content:flex-start;padding-top:48px}
+  .t-title{font-size:20px;font-weight:700;margin-bottom:4px;text-align:center}
+  .t-sub{font-size:13px;color:var(--text-dim);margin-bottom:20px;text-align:center}
+  .t-chart-wrap{position:relative;width:100%;max-width:380px;aspect-ratio:1/1;margin:0 auto 16px}
+  .t-quadrant-bg{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;border-radius:16px;overflow:hidden}
+  .t-quadrant-bg div:nth-child(1){background:var(--q-green)}
+  .t-quadrant-bg div:nth-child(2){background:var(--q-yellow)}
+  .t-quadrant-bg div:nth-child(3){background:var(--q-blue)}
+  .t-quadrant-bg div:nth-child(4){background:var(--q-red)}
+  .t-canvas{position:absolute;inset:0;border-radius:16px;z-index:2}
+  .t-legend{display:flex;gap:24px;justify-content:center;margin-bottom:16px}
+  .t-legend-item{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-dim)}
+  .t-legend-dot{width:10px;height:10px;border-radius:50%}
+  .t-insight{background:var(--surface);border-radius:14px;padding:16px 20px;max-width:380px;width:100%;text-align:center;font-size:14px;line-height:1.6;color:var(--text-dim);margin-bottom:20px}
+  .t-insight b{color:var(--text);font-weight:700}
+  .t-actions{display:flex;gap:12px}
+
+  /* ===== Screen 5: Heatmap (21:00 Settlement) ===== */
+  #heatmap{padding:20px 16px;justify-content:flex-start;padding-top:36px}
+  .h-badge{display:inline-block;background:rgba(127,90,240,.15);color:#a78bfa;font-size:12px;font-weight:700;padding:4px 14px;border-radius:20px;margin-bottom:12px;border:1px solid rgba(127,90,240,.25)}
+  .h-title{font-size:24px;font-weight:900;margin-bottom:4px;text-align:center}
+  .h-weather{font-size:48px;margin:12px 0 4px}
+  .h-weather-name{font-size:18px;font-weight:700;margin-bottom:16px}
+  .h-quadrant-wrap{position:relative;width:100%;max-width:300px;aspect-ratio:1/1;margin:0 auto 20px}
+  .h-quadrant-bg{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;border-radius:16px;overflow:hidden}
+  .h-quadrant-bg div:nth-child(1){background:var(--q-green)}
+  .h-quadrant-bg div:nth-child(2){background:var(--q-yellow)}
+  .h-quadrant-bg div:nth-child(3){background:var(--q-blue)}
+  .h-quadrant-bg div:nth-child(4){background:var(--q-red)}
+  .h-canvas{position:absolute;inset:0;border-radius:16px;z-index:2}
+  .h-stats{width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+  .h-bar-row{display:flex;align-items:center;gap:10px;font-size:13px}
+  .h-bar-label{width:48px;text-align:right;color:var(--text-dim);flex-shrink:0}
+  .h-bar{flex:1;height:24px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,.05)}
+  .h-bar-fill{height:100%;border-radius:6px;transition:width 1s ease}
+  .h-bar-pct{width:40px;font-weight:700;font-size:13px}
+
+  /* Responsive */
+  @media(max-height:700px){
+    #quadrant{padding-top:24px}
+    .q-container{max-width:300px}
+    .welcome-icon{font-size:60px}
+    .welcome-title{font-size:26px}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== SCREEN 1: Welcome ===== -->
+  <div id="welcome" class="screen active">
+    <div class="welcome-icon">🫧</div>
+    <div class="welcome-title">情緒四象限</div>
+    <div class="welcome-sub">點一個點，記錄你現在的心情。<br>只需要 1 秒鐘。</div>
+    <button class="btn btn-primary" onclick="goTo('quadrant')">開始</button>
+  </div>
+
+  <!-- ===== SCREEN 2: Quadrant Input ===== -->
+  <div id="quadrant" class="screen">
+    <div class="q-header">
+      <h2>今天的你，在哪裡？</h2>
+      <p>在座標上點擊你現在的位置</p>
+    </div>
+    <div class="q-container">
+      <div class="axis-label axis-y-top">快樂 😊 ↑</div>
+      <div class="axis-label axis-y-bottom">↓ 不快樂 😔</div>
+      <div class="axis-label axis-x-left">← 輕鬆</div>
+      <div class="axis-label axis-x-right">壓力大 →</div>
+      <div class="q-grid">
+        <div class="q-cell"><span class="emoji">😌</span>放鬆愜意</div>
+        <div class="q-cell"><span class="emoji">🔥</span>充實興奮</div>
+        <div class="q-cell"><span class="emoji">😶</span>無聊空虛</div>
+        <div class="q-cell"><span class="emoji">😰</span>焦慮壓迫</div>
+      </div>
+      <div class="crosshair-h" id="crossH"></div>
+      <div class="crosshair-v" id="crossV"></div>
+      <canvas class="q-canvas" id="qCanvas"></canvas>
+      <div class="my-dot" id="myDot"></div>
+    </div>
+    <div class="q-readout">
+      <div class="val" id="readout"></div>
+    </div>
+    <div class="q-actions">
+      <button class="btn btn-secondary" onclick="resetDot()">重新選</button>
+      <button class="btn btn-mint" id="btnConfirm" style="opacity:.3;pointer-events:none" onclick="confirmMood()">就是這裡</button>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN 3: Result ===== -->
+  <div id="result" class="screen">
+    <div class="r-title">已記錄 ✨</div>
+    <div class="r-quadrant-wrap">
+      <div class="r-quadrant-bg"><div></div><div></div><div></div><div></div></div>
+      <canvas class="r-canvas" id="rCanvas"></canvas>
+      <div class="r-my-dot" id="rMyDot"></div>
+    </div>
+    <div class="stats" id="statsContainer">
+      <div class="stat-card" id="stat1">
+        <div class="stat-icon">👥</div>
+        <div class="stat-body">
+          <div class="stat-label">全服今日打卡</div>
+          <div class="stat-value"><span class="highlight" id="totalPlayers">47,832</span> 人</div>
+        </div>
+      </div>
+      <div class="stat-card" id="stat2">
+        <div class="stat-icon">🤝</div>
+        <div class="stat-body">
+          <div class="stat-label">你的象限</div>
+          <div class="stat-value"><span class="highlight" id="sameQuadrant">12,401</span> 人與你同行</div>
+        </div>
+      </div>
+      <div class="stat-card weather-card" id="stat3">
+        <div class="stat-icon" id="weatherIcon">☀️</div>
+        <div class="stat-body">
+          <div class="stat-label">今日全服情緒氣候</div>
+          <div class="stat-value" id="weatherText">晴天</div>
+        </div>
+      </div>
+    </div>
+    <div class="r-actions">
+      <button class="btn btn-secondary" onclick="goTo('trajectory')">我的軌跡</button>
+      <button class="btn btn-secondary" onclick="goTo('heatmap')">全服氣候</button>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN 4: Trajectory ===== -->
+  <div id="trajectory" class="screen">
+    <div class="t-title">你的情緒軌跡</div>
+    <div class="t-sub">過去 7 天</div>
+    <div class="t-chart-wrap">
+      <div class="t-quadrant-bg"><div></div><div></div><div></div><div></div></div>
+      <canvas class="t-canvas" id="tCanvas"></canvas>
+    </div>
+    <div class="t-legend">
+      <div class="t-legend-item"><div class="t-legend-dot" style="background:var(--mint)"></div>你的位置</div>
+      <div class="t-legend-item"><div class="t-legend-dot" style="background:#a78bfa"></div>全服平均</div>
+    </div>
+    <div class="t-insight" id="tInsight"></div>
+    <div class="t-actions">
+      <button class="btn btn-secondary" onclick="goTo('result')">返回</button>
+      <button class="btn btn-secondary" onclick="goTo('heatmap')">全服氣候</button>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN 5: Heatmap ===== -->
+  <div id="heatmap" class="screen">
+    <div class="h-badge">21:00 結算</div>
+    <div class="h-title">今日情緒氣候</div>
+    <div class="h-weather" id="hWeatherIcon">☀️</div>
+    <div class="h-weather-name" id="hWeatherName">晴天</div>
+    <div class="h-quadrant-wrap">
+      <div class="h-quadrant-bg"><div></div><div></div><div></div><div></div></div>
+      <canvas class="h-canvas" id="hCanvas"></canvas>
+    </div>
+    <div class="h-stats" id="hStats">
+      <div class="h-bar-row"><div class="h-bar-label">😌 放鬆</div><div class="h-bar"><div class="h-bar-fill" style="width:0;background:#4ade80" id="bar1"></div></div><div class="h-bar-pct" id="pct1">0%</div></div>
+      <div class="h-bar-row"><div class="h-bar-label">🔥 興奮</div><div class="h-bar"><div class="h-bar-fill" style="width:0;background:#fbbf24" id="bar2"></div></div><div class="h-bar-pct" id="pct2">0%</div></div>
+      <div class="h-bar-row"><div class="h-bar-label">😶 無聊</div><div class="h-bar"><div class="h-bar-fill" style="width:0;background:#60a5fa" id="bar3"></div></div><div class="h-bar-pct" id="pct3">0%</div></div>
+      <div class="h-bar-row"><div class="h-bar-label">😰 焦慮</div><div class="h-bar"><div class="h-bar-fill" style="width:0;background:#f87171" id="bar4"></div></div><div class="h-bar-pct" id="pct4">0%</div></div>
+    </div>
+    <div style="text-align:center;font-size:14px;color:var(--text-dim);margin-bottom:20px" id="hTotal"></div>
+    <div class="t-actions">
+      <button class="btn btn-secondary" onclick="goTo('result')">返回</button>
+      <button class="btn btn-mint" onclick="restart()">再打一次卡</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== State ====================
+let myX = -1, myY = -1; // 0~1, x=stress, y=happiness (0=bottom/left, 1=top/right)
+let placed = false;
+
+// Fake 7-day history (stress, happiness) — will replace last day with real input
+const fakeHistory = [
+  {s:.35,h:.72},{s:.55,h:.60},{s:.70,h:.40},{s:.60,h:.45},{s:.40,h:.65},{s:.30,h:.80}
+];
+// Fake server average
+const serverAvg = [
+  {s:.48,h:.55},{s:.52,h:.50},{s:.58,h:.45},{s:.55,h:.48},{s:.50,h:.52},{s:.45,h:.58},{s:.47,h:.54}
+];
+const dayLabels = ['一','二','三','四','五','六','日'];
+
+// ==================== Navigation ====================
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'quadrant') initQuadrantCanvas();
+  if (id === 'result') showResult();
+  if (id === 'trajectory') showTrajectory();
+  if (id === 'heatmap') showHeatmap();
+}
+
+function restart() {
+  placed = false;
+  myX = -1; myY = -1;
+  const dot = document.getElementById('myDot');
+  dot.classList.remove('placed');
+  document.getElementById('readout').classList.remove('show');
+  document.getElementById('btnConfirm').style.opacity = '.3';
+  document.getElementById('btnConfirm').style.pointerEvents = 'none';
+  goTo('quadrant');
+}
+
+// ==================== Quadrant Canvas ====================
+function initQuadrantCanvas() {
+  const canvas = document.getElementById('qCanvas');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * devicePixelRatio;
+  canvas.height = rect.height * devicePixelRatio;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  drawCrosshair(ctx, rect.width, rect.height);
+
+  function handleCanvasTap(clientX, clientY) {
+    const r = canvas.getBoundingClientRect();
+    const px = (clientX - r.left) / r.width;
+    const py = (clientY - r.top) / r.height;
+    myX = Math.max(0, Math.min(1, px));   // stress (left=0, right=1)
+    myY = Math.max(0, Math.min(1, 1-py)); // happiness (bottom=0, top=1)
+    placed = true;
+    // Position dot
+    const dot = document.getElementById('myDot');
+    dot.style.left = (myX * 100) + '%';
+    dot.style.top = ((1-myY) * 100) + '%';
+    dot.classList.add('placed');
+    // Readout
+    const happiness = Math.round(myY * 100);
+    const stress = Math.round(myX * 100);
+    const readout = document.getElementById('readout');
+    readout.textContent = `快樂 ${happiness}　壓力 ${stress}`;
+    readout.classList.add('show');
+    // Enable confirm
+    document.getElementById('btnConfirm').style.opacity = '1';
+    document.getElementById('btnConfirm').style.pointerEvents = 'auto';
+  }
+  canvas.addEventListener('click', (e) => handleCanvasTap(e.clientX, e.clientY));
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const t = e.touches[0];
+    handleCanvasTap(t.clientX, t.clientY);
+  }, {passive: false});
+}
+
+function drawCrosshair(ctx, w, h) {
+  ctx.strokeStyle = 'rgba(255,255,255,.08)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4,4]);
+  // Center cross
+  ctx.beginPath(); ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function resetDot() {
+  placed = false;
+  document.getElementById('myDot').classList.remove('placed');
+  document.getElementById('readout').classList.remove('show');
+  document.getElementById('btnConfirm').style.opacity = '.3';
+  document.getElementById('btnConfirm').style.pointerEvents = 'none';
+}
+
+function confirmMood() {
+  if (!placed) return;
+  goTo('result');
+}
+
+// ==================== Result Screen ====================
+function showResult() {
+  const wrap = document.querySelector('.r-quadrant-wrap');
+  const rect = wrap.getBoundingClientRect();
+  const canvas = document.getElementById('rCanvas');
+  canvas.width = rect.width * devicePixelRatio;
+  canvas.height = rect.height * devicePixelRatio;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+
+  // Position my dot
+  const dot = document.getElementById('rMyDot');
+  dot.style.left = (myX * 100) + '%';
+  dot.style.top = ((1-myY) * 100) + '%';
+
+  // Generate fake community dots
+  const dots = generateCommunityDots(400);
+  animateDots(ctx, dots, rect.width, rect.height);
+
+  // Determine quadrant
+  const qName = getQuadrantName(myX, myY);
+  const qPop = getQuadrantPop(myX, myY);
+
+  // Animate stats
+  const cards = document.querySelectorAll('.stat-card');
+  cards.forEach(c => c.classList.remove('show'));
+
+  document.getElementById('sameQuadrant').textContent = qPop.toLocaleString();
+
+  const weather = getWeather();
+  document.getElementById('weatherIcon').textContent = weather.icon;
+  document.getElementById('weatherText').textContent = weather.name;
+
+  setTimeout(() => cards[0].classList.add('show'), 600);
+  setTimeout(() => cards[1].classList.add('show'), 900);
+  setTimeout(() => cards[2].classList.add('show'), 1200);
+}
+
+function generateCommunityDots(count) {
+  const dots = [];
+  // Cluster distribution — more in top-left and bottom-right to feel realistic
+  const clusters = [
+    {cx:.25,cy:.75,r:.2,weight:.35,color:'rgba(74,222,128,'},   // happy+relaxed
+    {cx:.65,cy:.65,r:.18,weight:.2,color:'rgba(251,191,36,'},    // happy+stressed
+    {cx:.3,cy:.35,r:.15,weight:.15,color:'rgba(96,165,250,'},    // unhappy+relaxed
+    {cx:.7,cy:.25,r:.2,weight:.3,color:'rgba(248,113,113,'},     // unhappy+stressed
+  ];
+  for (let i = 0; i < count; i++) {
+    // Pick cluster
+    let r = Math.random(), acc = 0, cluster = clusters[0];
+    for (const c of clusters) { acc += c.weight; if (r < acc) { cluster = c; break; } }
+    const angle = Math.random() * Math.PI * 2;
+    const dist = Math.random() * cluster.r;
+    const x = Math.max(.02, Math.min(.98, cluster.cx + Math.cos(angle) * dist));
+    const y = Math.max(.02, Math.min(.98, cluster.cy + Math.sin(angle) * dist));
+    const alpha = .15 + Math.random() * .25;
+    dots.push({x, y: 1-y, alpha, color: cluster.color + alpha + ')', delay: Math.random()});
+  }
+  return dots;
+}
+
+function animateDots(ctx, dots, w, h) {
+  const sorted = dots.sort((a,b) => a.delay - b.delay);
+  const duration = 1500;
+  const start = performance.now();
+
+  function frame(now) {
+    const elapsed = now - start;
+    const progress = Math.min(1, elapsed / duration);
+    ctx.clearRect(0, 0, w, h);
+    // Draw crosshair
+    drawCrosshair(ctx, w, h);
+
+    const visible = Math.floor(progress * sorted.length);
+    for (let i = 0; i < visible; i++) {
+      const d = sorted[i];
+      ctx.beginPath();
+      ctx.arc(d.x * w, d.y * h, 3, 0, Math.PI * 2);
+      ctx.fillStyle = d.color;
+      ctx.fill();
+    }
+    if (progress < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+function getQuadrantName(x, y) {
+  if (x < .5 && y >= .5) return '放鬆愜意';
+  if (x >= .5 && y >= .5) return '充實興奮';
+  if (x < .5 && y < .5) return '無聊空虛';
+  return '焦慮壓迫';
+}
+
+function getQuadrantPop(x, y) {
+  const pops = {
+    '放鬆愜意': 16742, '充實興奮': 9583,
+    '無聊空虛': 7106, '焦慮壓迫': 14401
+  };
+  return pops[getQuadrantName(x, y)];
+}
+
+function getWeather() {
+  // Pick weather based on where "most dots" are (fake logic based on clusters)
+  const weathers = [
+    {icon:'☀️', name:'晴天', desc:'大部分人今天心情不錯'},
+    {icon:'⛅', name:'多雲', desc:'心情有點複雜的一天'},
+    {icon:'🌧️', name:'雷雨', desc:'今天大家壓力都不小'},
+    {icon:'🌤️', name:'晴時多雲', desc:'有人開心有人煩惱'},
+  ];
+  return weathers[Math.floor(Math.random() * weathers.length)];
+}
+
+// ==================== Trajectory Screen ====================
+function showTrajectory() {
+  const wrap = document.querySelector('.t-chart-wrap');
+  const rect = wrap.getBoundingClientRect();
+  const canvas = document.getElementById('tCanvas');
+  canvas.width = rect.width * devicePixelRatio;
+  canvas.height = rect.height * devicePixelRatio;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  const w = rect.width, h = rect.height;
+
+  drawCrosshair(ctx, w, h);
+
+  // My trajectory (6 fake + today)
+  const myPath = [...fakeHistory, {s: myX, h: myY}];
+
+  // Animate drawing
+  const duration = 1200;
+  const start = performance.now();
+
+  function frame(now) {
+    const elapsed = now - start;
+    const progress = Math.min(1, elapsed / duration);
+    ctx.clearRect(0, 0, w, h);
+    drawCrosshair(ctx, w, h);
+
+    const visCount = Math.floor(progress * myPath.length) + 1;
+
+    // Server average line
+    const svgProgress = Math.min(1, progress * 1.2);
+    const svgCount = Math.floor(svgProgress * serverAvg.length);
+    if (svgCount >= 2) {
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(167,139,250,.5)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6,4]);
+      for (let i = 0; i < svgCount; i++) {
+        const px = serverAvg[i].s * w;
+        const py = (1 - serverAvg[i].h) * h;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // Server dots
+      for (let i = 0; i < svgCount; i++) {
+        ctx.beginPath();
+        ctx.arc(serverAvg[i].s * w, (1-serverAvg[i].h) * h, 4, 0, Math.PI*2);
+        ctx.fillStyle = '#a78bfa';
+        ctx.fill();
+      }
+    }
+
+    // My line
+    if (visCount >= 2) {
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(178,223,219,.7)';
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([]);
+      for (let i = 0; i < Math.min(visCount, myPath.length); i++) {
+        const px = myPath[i].s * w;
+        const py = (1 - myPath[i].h) * h;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+
+    // My dots + day labels
+    for (let i = 0; i < Math.min(visCount, myPath.length); i++) {
+      const px = myPath[i].s * w;
+      const py = (1 - myPath[i].h) * h;
+      const isToday = (i === myPath.length - 1);
+      ctx.beginPath();
+      ctx.arc(px, py, isToday ? 8 : 5, 0, Math.PI*2);
+      ctx.fillStyle = isToday ? '#B2DFDB' : 'rgba(178,223,219,.6)';
+      ctx.fill();
+      if (isToday) {
+        ctx.beginPath();
+        ctx.arc(px, py, 12, 0, Math.PI*2);
+        ctx.strokeStyle = 'rgba(178,223,219,.3)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      // Day label
+      ctx.font = `${isToday?'bold ':''}11px 'Noto Sans TC',sans-serif`;
+      ctx.fillStyle = isToday ? '#fff' : 'rgba(255,255,255,.5)';
+      ctx.textAlign = 'center';
+      ctx.fillText(isToday ? '今天' : '週'+dayLabels[i], px, py - (isToday?16:12));
+    }
+
+    if (progress < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // Insight
+  const insight = document.getElementById('tInsight');
+  const happyToday = Math.round(myY * 100);
+  const stressToday = Math.round(myX * 100);
+  const avgHappy = Math.round(fakeHistory.reduce((s,d)=>s+d.h,0)/fakeHistory.length*100);
+  const diff = happyToday - avgHappy;
+  if (diff > 10) {
+    insight.innerHTML = `今天的你比過去一週<b>開心了 ${diff} 點</b> 🎉<br>繼續保持！`;
+  } else if (diff < -10) {
+    insight.innerHTML = `今天有點辛苦，比平常<b>低了 ${Math.abs(diff)} 點</b>。<br>沒關係，明天會更好。`;
+  } else {
+    insight.innerHTML = `這週的你，狀態<b>蠻穩定</b>的 😊<br>保持節奏就好。`;
+  }
+}
+
+// ==================== Heatmap Screen ====================
+function showHeatmap() {
+  const wrap = document.querySelector('.h-quadrant-wrap');
+  const rect = wrap.getBoundingClientRect();
+  const canvas = document.getElementById('hCanvas');
+  canvas.width = rect.width * devicePixelRatio;
+  canvas.height = rect.height * devicePixelRatio;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  const w = rect.width, h = rect.height;
+
+  // Dense dots
+  const dots = generateCommunityDots(800);
+  animateDots(ctx, dots, w, h);
+
+  // Weather
+  const weather = getWeather();
+  document.getElementById('hWeatherIcon').textContent = weather.icon;
+  document.getElementById('hWeatherName').textContent = weather.name;
+  document.getElementById('hTotal').textContent = `全服 47,832 人參與今日打卡`;
+
+  // Bar chart animation
+  const pcts = [35, 20, 15, 30]; // Matches cluster weights
+  setTimeout(() => {
+    for (let i = 0; i < 4; i++) {
+      document.getElementById('bar'+(i+1)).style.width = pcts[i] + '%';
+      document.getElementById('pct'+(i+1)).textContent = pcts[i] + '%';
+    }
+  }, 300);
+}
+
+// ==================== Init ====================
+window.addEventListener('load', () => {
+  // Presize quadrant canvas
+  setTimeout(() => {
+    const c = document.getElementById('qCanvas');
+    if (c && c.parentElement) {
+      const r = c.parentElement.getBoundingClientRect();
+      c.width = r.width * devicePixelRatio;
+      c.height = r.height * devicePixelRatio;
+      c.style.width = r.width + 'px';
+      c.style.height = r.height + 'px';
+    }
+  }, 100);
+});
+</script>
+</body>
+</html>
