@@ -60,8 +60,8 @@
   .crosshair-h{height:1px;width:100%;top:50%}
   .crosshair-v{width:1px;height:100%;left:50%}
   /* My dot */
-  .my-dot{position:absolute;width:20px;height:20px;border-radius:50%;background:var(--mint);box-shadow:0 0 16px var(--mint-glow),0 0 40px var(--mint-glow);z-index:10;pointer-events:none;transform:translate(-50%,-50%) scale(0);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
-  .my-dot.placed{transform:translate(-50%,-50%) scale(1)}
+  .my-dot{position:absolute;width:20px;height:20px;border-radius:50%;background:var(--mint);box-shadow:0 0 16px var(--mint-glow),0 0 40px var(--mint-glow);z-index:10;pointer-events:none;transform:translate(-50%,-50%) scale(0);transition:transform .3s cubic-bezier(.34,1.56,.64,1);will-change:left,top}
+  .my-dot.placed{transform:translate(-50%,-50%) scale(1);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
   .my-dot::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--mint);opacity:.5;animation:ping 1.5s ease-out infinite}
   @keyframes ping{0%{transform:scale(1);opacity:.5}100%{transform:scale(2.2);opacity:0}}
   .q-readout{margin-top:20px;text-align:center;min-height:40px}
@@ -266,6 +266,8 @@
 // ==================== State ====================
 let myX = -1, myY = -1; // 0~1, x=stress, y=happiness (0=bottom/left, 1=top/right)
 let placed = false;
+let isDragging = false;
+let canvasEventsReady = false;
 
 // Fake 7-day history (stress, happiness) — will replace last day with real input
 const fakeHistory = [
@@ -310,34 +312,49 @@ function initQuadrantCanvas() {
   ctx.scale(devicePixelRatio, devicePixelRatio);
   drawCrosshair(ctx, rect.width, rect.height);
 
-  function handleCanvasTap(clientX, clientY) {
+  function updateDotPosition(clientX, clientY) {
     const r = canvas.getBoundingClientRect();
     const px = (clientX - r.left) / r.width;
     const py = (clientY - r.top) / r.height;
-    myX = Math.max(0, Math.min(1, px));   // stress (left=0, right=1)
-    myY = Math.max(0, Math.min(1, 1-py)); // happiness (bottom=0, top=1)
+    myX = Math.max(0, Math.min(1, px));
+    myY = Math.max(0, Math.min(1, 1-py));
     placed = true;
-    // Position dot
     const dot = document.getElementById('myDot');
     dot.style.left = (myX * 100) + '%';
     dot.style.top = ((1-myY) * 100) + '%';
     dot.classList.add('placed');
-    // Readout
     const happiness = Math.round(myY * 100);
     const stress = Math.round(myX * 100);
     const readout = document.getElementById('readout');
     readout.textContent = `快樂 ${happiness}　壓力 ${stress}`;
     readout.classList.add('show');
-    // Enable confirm
     document.getElementById('btnConfirm').style.opacity = '1';
     document.getElementById('btnConfirm').style.pointerEvents = 'auto';
   }
-  canvas.addEventListener('click', (e) => handleCanvasTap(e.clientX, e.clientY));
-  canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    const t = e.touches[0];
-    handleCanvasTap(t.clientX, t.clientY);
-  }, {passive: false});
+
+  if (!canvasEventsReady) {
+    canvasEventsReady = true;
+    // Mouse drag
+    canvas.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      updateDotPosition(e.clientX, e.clientY);
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (isDragging) updateDotPosition(e.clientX, e.clientY);
+    });
+    window.addEventListener('mouseup', () => { isDragging = false; });
+    // Touch drag
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      isDragging = true;
+      updateDotPosition(e.touches[0].clientX, e.touches[0].clientY);
+    }, {passive: false});
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (isDragging) updateDotPosition(e.touches[0].clientX, e.touches[0].clientY);
+    }, {passive: false});
+    canvas.addEventListener('touchend', () => { isDragging = false; });
+  }
 }
 
 function drawCrosshair(ctx, w, h) {
