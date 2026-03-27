@@ -7,8 +7,8 @@
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
-    font-family: -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
-    background: #1a1a2e;
+    font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: #0a0a12;
     overflow: hidden;
     height: 100vh;
     width: 100vw;
@@ -20,346 +20,677 @@
     width: 390px; height: 844px;
     position: relative;
     overflow: hidden;
-    background: #1a1a2e;
+    background: #0a0a12;
     border-radius: 20px;
-    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    box-shadow: 0 0 40px rgba(0,0,0,0.8);
   }
   @media (max-width: 420px) {
     #app { width: 100vw; height: 100vh; border-radius: 0; }
   }
 
-  /* Sky */
+  /* === SKY === */
   .sky {
-    position: absolute; top: 0; left: 0; right: 0; height: 55%;
-    background: linear-gradient(180deg, #4a4a6a 0%, #6a6a8a 40%, #8a8a9a 100%);
+    position: absolute; top: 0; left: 0; right: 0; height: 42%;
+    background: linear-gradient(180deg, #0d0d1a 0%, #1a1a3a 40%, #2a2a4a 100%);
     transition: background 1.5s ease;
+    z-index: 1;
   }
-  .sky.sunny {
-    background: linear-gradient(180deg, #87CEEB 0%, #FFD89B 50%, #FFECD2 100%);
-  }
-  .sky.rainy {
-    background: linear-gradient(180deg, #2c3e50 0%, #4a6572 50%, #607D8B 100%);
-  }
-  .sky.thunder {
-    background: linear-gradient(180deg, #1a0a2e 0%, #4a1a6e 50%, #6a3a8e 100%);
-  }
+  .sky.sunny { background: linear-gradient(180deg, #4a8bc2 0%, #87CEEB 30%, #FFD89B 70%, #FFECD2 100%); }
+  .sky.rainy { background: linear-gradient(180deg, #151520 0%, #2c3e50 40%, #4a6572 100%); }
+  .sky.thunder { background: linear-gradient(180deg, #0a0518 0%, #1a0a2e 40%, #3a1a5e 100%); }
 
-  /* Stars */
+  /* === STARS === */
   .stars {
-    position: absolute; top: 0; left: 0; right: 0; height: 55%;
-    opacity: 0.3;
+    position: absolute; top: 0; left: 0; right: 0; height: 42%;
+    opacity: 0.4; z-index: 2;
     transition: opacity 1.5s;
   }
-  .sky.sunny ~ .stars, .sky.rainy ~ .stars, .sky.thunder ~ .stars { opacity: 0; }
+  .sky.sunny ~ .stars { opacity: 0; }
+  .sky.rainy ~ .stars { opacity: 0.1; }
+  .sky.thunder ~ .stars { opacity: 0.05; }
   .star {
     position: absolute;
-    width: 3px; height: 3px;
+    width: 2px; height: 2px;
     background: #fff;
     border-radius: 50%;
     animation: twinkle 2s infinite alternate;
   }
-  @keyframes twinkle { from { opacity: 0.3; } to { opacity: 1; } }
+  @keyframes twinkle { from { opacity: 0.2; } to { opacity: 1; } }
 
-  /* Rain */
+  /* === TREELINE SILHOUETTE === */
+  .treeline {
+    position: absolute;
+    top: 30%; left: 0; right: 0; height: 16%;
+    z-index: 3;
+    pointer-events: none;
+  }
+  .treeline svg { width: 100%; height: 100%; display: block; }
+
+  /* === RAIN === */
   .rain-container {
-    position: absolute; top: 0; left: 0; right: 0; height: 55%;
+    position: absolute; top: 0; left: 0; right: 0; height: 100%;
     pointer-events: none; opacity: 0; transition: opacity 1s;
+    z-index: 4;
   }
   .rain-container.active { opacity: 1; }
   .raindrop {
     position: absolute; top: -20px;
-    width: 2px; background: linear-gradient(transparent, rgba(74,165,181,0.6));
+    width: 2px;
+    background: linear-gradient(transparent, rgba(100,180,220,0.5));
     animation: fall linear infinite;
   }
-  @keyframes fall { to { transform: translateY(500px); } }
+  @keyframes fall { to { transform: translateY(900px); } }
 
-  /* Lightning */
+  /* === LIGHTNING === */
   .lightning {
-    position: absolute; top: 0; left: 0; right: 0; height: 55%;
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(255,255,255,0); pointer-events: none;
     transition: background 0.05s;
+    z-index: 5;
   }
-  .lightning.flash { background: rgba(255,255,255,0.3); }
+  .lightning.flash { background: rgba(200,180,255,0.25); }
 
-  /* Ground / Campfire */
+  /* === GROUND === */
   .ground {
-    position: absolute; bottom: 0; left: 0; right: 0; height: 50%;
-    background: linear-gradient(180deg, #2d1f0e 0%, #1a1208 100%);
-  }
-  .campfire {
-    position: absolute; bottom: 18%; left: 50%; transform: translateX(-50%);
-    width: 80px; height: 100px;
-  }
-  .fire-base {
-    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-    width: 60px; height: 8px; background: #5c3d2e; border-radius: 50%;
-  }
-  .flame {
-    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
-    width: 30px; height: 50px;
-    background: radial-gradient(ellipse at bottom, #ff6600 0%, #ff9900 40%, #ffcc00 70%, transparent 100%);
-    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-    animation: flicker 0.5s infinite alternate;
-  }
-  .flame::before {
-    content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-    width: 20px; height: 35px;
-    background: radial-gradient(ellipse at bottom, #ffcc00 0%, #ff9900 50%, transparent 100%);
-    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-    animation: flicker 0.3s infinite alternate-reverse;
-  }
-  @keyframes flicker {
-    0% { transform: translateX(-50%) scaleX(1) scaleY(1); }
-    100% { transform: translateX(-50%) scaleX(0.9) scaleY(1.05); }
-  }
-  .fire-glow {
-    position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
-    width: 150px; height: 80px;
-    background: radial-gradient(ellipse, rgba(255,120,0,0.15) 0%, transparent 70%);
+    position: absolute; bottom: 0; left: 0; right: 0; height: 58%;
+    background: linear-gradient(180deg, #1a2a15 0%, #15200f 15%, #1a150e 40%, #120e08 100%);
+    z-index: 6;
   }
 
-  /* Bottle */
-  .bottle-area {
-    position: absolute; bottom: 8%; right: 15%;
-    width: 50px; height: 80px;
+  /* === CAMPFIRE GLOW ON GROUND === */
+  .ground-glow {
+    position: absolute;
+    bottom: 22%; left: 50%; transform: translateX(-50%);
+    width: 340px; height: 240px;
+    background: radial-gradient(ellipse, rgba(255,140,40,0.18) 0%, rgba(255,100,20,0.08) 35%, transparent 70%);
+    z-index: 7;
+    pointer-events: none;
+    animation: glowPulse 3s ease-in-out infinite alternate;
   }
-  .bottle-body {
-    position: absolute; bottom: 0;
-    width: 40px; height: 60px;
-    border: 2px solid rgba(255,255,255,0.25);
-    border-radius: 0 0 8px 8px;
-    background: rgba(255,255,255,0.05);
-    overflow: hidden;
+  @keyframes glowPulse {
+    0% { opacity: 0.7; transform: translateX(-50%) scale(1); }
+    100% { opacity: 1; transform: translateX(-50%) scale(1.06); }
+  }
+
+  /* === CAMPFIRE GROUP === */
+  .campfire-group {
+    position: absolute;
+    bottom: 28%; left: 50%; transform: translateX(-50%);
+    width: 180px; height: 160px;
+    z-index: 10;
+  }
+
+  /* Stone circle */
+  .stone {
+    position: absolute;
+    background: radial-gradient(ellipse at 40% 30%, #7a7a7a, #4a4a4a, #333);
+    border-radius: 50%;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.6), 0 1px 3px rgba(0,0,0,0.4);
+  }
+  .stone:nth-child(1) { width: 26px; height: 18px; bottom: 4px; left: 12px; transform: rotate(-10deg); }
+  .stone:nth-child(2) { width: 24px; height: 17px; bottom: 0; left: 42px; transform: rotate(5deg); }
+  .stone:nth-child(3) { width: 28px; height: 18px; bottom: -2px; left: 70px; transform: rotate(8deg); }
+  .stone:nth-child(4) { width: 22px; height: 16px; bottom: -2px; left: 102px; transform: rotate(-5deg); }
+  .stone:nth-child(5) { width: 26px; height: 18px; bottom: 2px; left: 128px; transform: rotate(12deg); }
+  .stone:nth-child(6) { width: 24px; height: 16px; bottom: 12px; left: 148px; transform: rotate(20deg); }
+  .stone:nth-child(7) { width: 22px; height: 16px; bottom: 14px; left: -2px; transform: rotate(-18deg); }
+  .stone:nth-child(8) { width: 20px; height: 14px; bottom: 22px; left: 155px; transform: rotate(25deg); }
+
+  /* Wood logs */
+  .log {
+    position: absolute;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+  }
+  .log-1 {
+    width: 90px; height: 14px;
+    background: linear-gradient(90deg, #3d2510, #5c3a1e, #4a2e15, #3d2510);
+    bottom: 18px; left: 30px;
+    transform: rotate(-22deg);
+  }
+  .log-2 {
+    width: 85px; height: 12px;
+    background: linear-gradient(90deg, #4a2e15, #6b4428, #5a3820, #4a2e15);
+    bottom: 20px; left: 50px;
+    transform: rotate(22deg);
+  }
+  .log-3 {
+    width: 70px; height: 11px;
+    background: linear-gradient(90deg, #352010, #4d3018, #3a2510, #352010);
+    bottom: 26px; left: 52px;
+    transform: rotate(-3deg);
+  }
+  .log-4 {
+    width: 60px; height: 10px;
+    background: linear-gradient(90deg, #3a2510, #553820, #3a2510);
+    bottom: 22px; left: 35px;
+    transform: rotate(35deg);
+  }
+  .log::after {
+    content: '';
+    position: absolute;
+    width: 50%; height: 100%;
+    left: 25%; top: 0;
+    background: radial-gradient(ellipse, rgba(255,80,0,0.2) 0%, transparent 70%);
+    border-radius: 5px;
+  }
+
+  /* Fire flames */
+  .fire-container {
+    position: absolute;
+    bottom: 28px; left: 50%; transform: translateX(-50%);
+    width: 90px; height: 110px;
+  }
+  .flame-outer {
+    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 64px; height: 85px;
+    background: radial-gradient(ellipse at 50% 85%, #ff3300 0%, #ff5500 20%, #ff7700 40%, #ff9922 60%, transparent 75%);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    animation: flameOuter 0.4s infinite alternate ease-in-out;
+    filter: blur(1.5px);
+    opacity: 0.9;
+  }
+  @keyframes flameOuter {
+    0% { transform: translateX(-50%) scaleX(1) scaleY(1); }
+    33% { transform: translateX(-52%) scaleX(0.9) scaleY(1.05); }
+    66% { transform: translateX(-48%) scaleX(1.05) scaleY(0.96); }
+    100% { transform: translateX(-50%) scaleX(0.93) scaleY(1.03); }
+  }
+  .flame-mid {
+    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 46px; height: 70px;
+    background: radial-gradient(ellipse at 50% 80%, #ff8800 0%, #ffaa22 25%, #ffcc44 50%, #ffdd66 65%, transparent 80%);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    animation: flameMid 0.3s infinite alternate-reverse ease-in-out;
+    filter: blur(0.5px);
+  }
+  @keyframes flameMid {
+    0% { transform: translateX(-50%) scaleX(1) scaleY(1); }
+    100% { transform: translateX(-50%) scaleX(0.85) scaleY(1.08); }
+  }
+  .flame-inner {
+    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 26px; height: 50px;
+    background: radial-gradient(ellipse at 50% 75%, #fffef0 0%, #ffee88 25%, #ffdd55 50%, #ffcc33 65%, transparent 85%);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    animation: flameInner 0.25s infinite alternate ease-in-out;
+  }
+  @keyframes flameInner {
+    0% { transform: translateX(-50%) scaleX(1) scaleY(1); }
+    100% { transform: translateX(-48%) scaleX(0.82) scaleY(1.1); }
+  }
+  .flame-tip {
+    position: absolute; bottom: 55px; left: 50%; transform: translateX(-50%);
+    width: 16px; height: 35px;
+    background: radial-gradient(ellipse at 50% 100%, rgba(255,200,60,0.5) 0%, rgba(255,150,30,0.2) 40%, transparent 75%);
+    border-radius: 50% 50% 40% 40% / 70% 70% 30% 30%;
+    animation: flameTip 0.35s infinite alternate ease-in-out;
+  }
+  @keyframes flameTip {
+    0% { transform: translateX(-50%) scaleY(1) translateY(0); }
+    100% { transform: translateX(-52%) scaleY(0.8) translateY(-5px); }
+  }
+  .fire-halo {
+    position: absolute;
+    bottom: -20px; left: 50%; transform: translateX(-50%);
+    width: 130px; height: 60px;
+    background: radial-gradient(ellipse, rgba(255,120,30,0.3) 0%, rgba(255,80,0,0.1) 50%, transparent 75%);
+    animation: haloPulse 2s ease-in-out infinite alternate;
+  }
+  @keyframes haloPulse { 0% { opacity: 0.6; } 100% { opacity: 1; } }
+
+  /* === FIRE SPARKS === */
+  .spark {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 11;
+    animation: sparkRise var(--dur) ease-out forwards;
+    opacity: 0;
+  }
+  @keyframes sparkRise {
+    0% { opacity: 0.9; transform: translate(0, 0) scale(1); }
+    30% { opacity: 0.7; }
+    100% { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(0.15); }
+  }
+
+  /* === BOTTLE SCENE (left side of campfire) === */
+  .bottle-scene {
+    position: absolute;
+    bottom: 20%;
+    left: 42px;
+    z-index: 12;
+  }
+  .bottle-stone {
+    position: absolute;
+    bottom: -8px; left: -10px;
+    width: 90px; height: 20px;
+    background: radial-gradient(ellipse at 40% 30%, #5a5a5a, #3d3d3d);
+    border-radius: 50%;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+  }
+  .bottle-deco-stick {
+    position: absolute;
+    bottom: 0px; left: 78px;
+    width: 4px; height: 40px;
+    background: linear-gradient(180deg, #4a3520, #3a2510);
+    border-radius: 2px;
+    transform: rotate(18deg);
+    transform-origin: bottom center;
+  }
+  .bottle-deco-pebble {
+    position: absolute;
+    bottom: -6px; left: 74px;
+    width: 14px; height: 9px;
+    background: radial-gradient(ellipse at 40% 30%, #555, #333);
+    border-radius: 50%;
+  }
+  .bottle-wrap {
+    position: relative;
+    width: 60px; height: 95px;
+  }
+  .bottle-cap {
+    position: absolute;
+    top: 0; left: 50%; transform: translateX(-50%);
+    width: 20px; height: 9px;
+    background: linear-gradient(180deg, #9a7a50, #7a5a38);
+    border-radius: 3px 3px 0 0;
+    border: 1px solid rgba(255,255,255,0.08);
+    z-index: 2;
   }
   .bottle-neck {
-    position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
-    width: 20px; height: 15px;
-    border: 2px solid rgba(255,255,255,0.25);
+    position: absolute;
+    top: 8px; left: 50%; transform: translateX(-50%);
+    width: 24px; height: 18px;
+    border: 2px solid rgba(180,220,255,0.22);
     border-bottom: none;
-    border-radius: 4px 4px 0 0;
-    background: rgba(255,255,255,0.05);
+    border-radius: 5px 5px 0 0;
+    background: rgba(180,220,255,0.05);
+    z-index: 1;
+  }
+  .bottle-neck::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 2px;
+    width: 4px; height: 11px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.15), transparent);
+    border-radius: 2px;
+  }
+  .bottle-body {
+    position: absolute;
+    top: 25px; left: 50%; transform: translateX(-50%);
+    width: 52px; height: 65px;
+    border: 2px solid rgba(180,220,255,0.2);
+    border-radius: 4px 4px 10px 10px;
+    background: rgba(180,220,255,0.04);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    padding: 4px;
+    gap: 3px;
+  }
+  .bottle-body::before {
+    content: '';
+    position: absolute;
+    top: 4px; left: 4px;
+    width: 6px; height: 50px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04), transparent);
+    border-radius: 3px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .bottle-body::after {
+    content: '';
+    position: absolute;
+    top: 8px; right: 5px;
+    width: 3px; height: 22px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.08), transparent);
+    border-radius: 2px;
+    z-index: 2;
+    pointer-events: none;
   }
   .bottle-ball {
-    position: absolute; bottom: 4px;
-    width: 14px; height: 14px;
+    width: 15px; height: 15px;
     border-radius: 50%;
-    transition: all 0.5s;
+    flex-shrink: 0;
+    position: relative;
+    box-shadow: 0 0 5px rgba(255,255,255,0.12);
   }
 
-  /* UI Layers */
+  /* === UI SCREENS === */
   .screen {
     position: absolute; top: 0; left: 0; right: 0; bottom: 0;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     opacity: 0; pointer-events: none;
     transition: opacity 0.8s ease;
-    z-index: 10;
+    z-index: 20;
   }
   .screen.active { opacity: 1; pointer-events: auto; }
 
-  /* Text */
+  /* === GAME-STYLE TEXT === */
   .guide-text {
     color: #fff;
-    font-size: 24px;
-    font-weight: 500;
-    letter-spacing: 4px;
-    text-shadow: 0 2px 15px rgba(0,0,0,0.8);
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 5px;
+    text-shadow: 0 0 10px rgba(0,0,0,1), 0 2px 15px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.6);
     animation: fadeInSlow 1.5s ease;
-    margin-bottom: 40px;
+    margin-bottom: 36px;
+    padding: 12px 22px;
+    background: rgba(0,0,0,0.55);
+    border-radius: 10px;
+    backdrop-filter: blur(4px);
   }
   @keyframes fadeInSlow { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
   .float-text {
     position: absolute;
-    color: rgba(255,255,255,0.95);
-    font-size: 18px;
-    font-weight: 400;
-    letter-spacing: 2px;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: 3px;
     pointer-events: none;
-    animation: floatUp 3s ease forwards;
-    z-index: 20;
-    text-shadow: 0 1px 10px rgba(0,0,0,0.8);
+    animation: floatUp 3.5s ease forwards;
+    z-index: 25;
+    text-shadow: 0 0 10px rgba(0,0,0,1), 0 2px 12px rgba(0,0,0,0.9);
+    padding: 10px 18px;
+    background: rgba(0,0,0,0.55);
+    border-radius: 10px;
+    white-space: nowrap;
   }
   @keyframes floatUp {
-    0% { opacity: 0; transform: translateY(20px); }
-    20% { opacity: 1; }
-    80% { opacity: 1; }
-    100% { opacity: 0; transform: translateY(-30px); }
+    0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+    15% { opacity: 1; }
+    75% { opacity: 1; }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-40px); }
   }
 
-  /* Weather Cards */
+  /* === WEATHER CARDS === */
   .weather-cards {
-    display: flex; gap: 16px;
-    padding: 0 20px;
+    display: flex; gap: 14px;
+    padding: 0 18px;
   }
   .weather-card {
     flex: 1;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.25);
-    border-radius: 16px;
-    padding: 28px 16px;
+    background: rgba(0,0,0,0.35);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: 14px;
+    padding: 26px 12px;
     text-align: center;
     cursor: pointer;
     transition: all 0.4s ease;
-    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+    backdrop-filter: blur(6px);
   }
-  .weather-card:hover { background: rgba(255,255,255,0.15); transform: translateY(-4px); }
-  .weather-card:active { transform: scale(0.95); }
-  .weather-card .icon { font-size: 44px; margin-bottom: 12px; }
+  .weather-card:hover {
+    background: rgba(0,0,0,0.45);
+    transform: translateY(-4px);
+    border-color: rgba(255,200,100,0.4);
+    box-shadow: 0 6px 25px rgba(0,0,0,0.5), 0 0 15px rgba(255,200,100,0.08);
+  }
+  .weather-card:active { transform: scale(0.94); }
+  .weather-card .icon { font-size: 42px; margin-bottom: 10px; }
   .weather-card .label {
     color: #fff;
-    font-size: 16px;
-    font-weight: 500;
+    font-size: 15px;
+    font-weight: 600;
     letter-spacing: 2px;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.8);
   }
   .weather-card.selected {
-    border-color: rgba(255,255,255,0.5);
-    background: rgba(255,255,255,0.2);
+    border-color: rgba(255,200,100,0.6);
+    background: rgba(255,200,100,0.15);
+    box-shadow: 0 0 20px rgba(255,200,100,0.15);
   }
   .weather-card.faded { opacity: 0; transform: scale(0.8); pointer-events: none; }
 
-  /* Sentence selection */
+  /* === SENTENCE BUTTONS === */
   .sentence-list {
     display: flex; flex-direction: column;
-    gap: 12px; padding: 0 30px;
+    gap: 12px; padding: 0 28px;
     width: 100%;
   }
   .sentence-btn {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.6);
+    border: 1.5px solid rgba(255,255,255,0.18);
     border-radius: 12px;
     padding: 18px 22px;
-    color: rgba(255,255,255,0.95);
+    color: #fff;
     font-size: 16px;
-    font-weight: 400;
+    font-weight: 500;
     letter-spacing: 1px;
     cursor: pointer;
     transition: all 0.3s;
     text-align: left;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.7);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    backdrop-filter: blur(8px);
   }
-  .sentence-btn:hover { background: rgba(255,255,255,0.15); }
+  .sentence-btn:hover {
+    background: rgba(0,0,0,0.7);
+    border-color: rgba(255,255,255,0.3);
+  }
   .sentence-btn:active { transform: scale(0.97); }
 
-  /* Ball */
+  /* === EMOTION BALL === */
   .emotion-ball {
-    width: 50px; height: 50px;
+    width: 56px; height: 56px;
     border-radius: 50%;
     position: absolute;
     top: 20%; left: 50%; transform: translateX(-50%);
     opacity: 0;
-    box-shadow: 0 0 20px rgba(255,255,255,0.3);
-    z-index: 15;
-  }
-  .emotion-ball.drop {
-    animation: ballDrop 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  }
-  @keyframes ballDrop {
-    0% { opacity: 0; top: 10%; transform: translateX(-50%) scale(0.3); }
-    30% { opacity: 1; }
-    100% { opacity: 1; top: 50%; transform: translateX(-50%) scale(1); }
+    z-index: 22;
+    pointer-events: none;
   }
 
-  /* Choice buttons */
+  .condense-particle {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 21;
+    animation: condenseIn var(--dur) ease-in forwards;
+  }
+  @keyframes condenseIn {
+    0% { opacity: 0.8; }
+    80% { opacity: 0.5; }
+    100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0); }
+  }
+
+  .emotion-ball.condense {
+    animation: ballCondense 1.8s ease forwards;
+  }
+  @keyframes ballCondense {
+    0% { opacity: 0; top: 25%; transform: translateX(-50%) scale(0); filter: blur(10px); }
+    40% { opacity: 0.5; transform: translateX(-50%) scale(0.4); filter: blur(5px); }
+    70% { opacity: 0.9; transform: translateX(-50%) scale(1.12); filter: blur(1px); }
+    85% { transform: translateX(-50%) scale(0.95); filter: blur(0); }
+    100% { opacity: 1; top: 40%; transform: translateX(-50%) scale(1); filter: blur(0); }
+  }
+
+  .ball-label {
+    position: absolute;
+    top: 50%; left: 50%; transform: translateX(-50%);
+    color: rgba(255,255,255,0.45);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    white-space: nowrap;
+    z-index: 23;
+    opacity: 0;
+    animation: labelFadeIn 1s 1.5s ease forwards;
+    text-shadow: 0 1px 8px rgba(0,0,0,0.9);
+    padding: 4px 10px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 6px;
+  }
+  @keyframes labelFadeIn { to { opacity: 1; } }
+
+  .ball-glow {
+    position: absolute;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    top: 25%; left: 50%; transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 21;
+    opacity: 0;
+    animation: ballGlowAnim 1.8s 0.3s ease forwards;
+  }
+  @keyframes ballGlowAnim {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+    50% { opacity: 0.5; }
+    70% { opacity: 0.3; transform: translate(-50%, -50%) scale(1.3); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.6); }
+  }
+
+  /* === CHOICE BUTTONS === */
   .choice-area {
     display: flex; gap: 16px;
     padding: 0 24px; width: 100%;
-    margin-top: 60px;
+    margin-top: 24px;
   }
   .choice-btn {
     flex: 1;
     padding: 20px 12px;
-    border-radius: 16px;
-    border: 1px solid rgba(255,255,255,0.25);
-    background: rgba(255,255,255,0.1);
+    border-radius: 14px;
+    border: 1.5px solid rgba(255,200,100,0.3);
+    background: linear-gradient(180deg, rgba(255,200,100,0.12) 0%, rgba(255,150,50,0.06) 100%);
     cursor: pointer;
     transition: all 0.3s;
     text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
   }
-  .choice-btn:hover { background: rgba(255,255,255,0.12); }
+  .choice-btn:hover {
+    background: linear-gradient(180deg, rgba(255,200,100,0.2) 0%, rgba(255,150,50,0.1) 100%);
+    border-color: rgba(255,200,100,0.5);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 0 18px rgba(255,200,100,0.12);
+  }
   .choice-btn:active { transform: scale(0.95); }
   .choice-btn .main-text {
     color: #fff;
     font-size: 18px;
-    font-weight: 600;
-    letter-spacing: 2px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.7);
     margin-bottom: 6px;
   }
   .choice-btn .sub-text {
-    color: rgba(255,255,255,0.65);
-    font-size: 14px;
-    font-weight: 300;
-    letter-spacing: 1px;
+    color: rgba(255,255,255,0.55);
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 2px;
   }
 
-  /* Ball fly animation */
+  /* === BALL FLY ANIMATIONS === */
   .emotion-ball.to-bottle {
-    animation: flyToBottle 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    animation: flyToBottle 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }
   @keyframes flyToBottle {
-    0% { top: 50%; left: 50%; transform: translateX(-50%) scale(1); }
-    50% { top: 40%; left: 70%; transform: translateX(-50%) scale(0.8); }
-    100% { top: 72%; left: 72%; transform: translateX(-50%) scale(0.4); opacity: 0.6; }
+    0% { top: 40%; left: 50%; transform: translateX(-50%) scale(1); opacity: 1; }
+    40% { top: 52%; left: 28%; transform: translateX(-50%) scale(0.65); opacity: 0.9; }
+    100% { top: 66%; left: 18%; transform: translateX(-50%) scale(0.3); opacity: 0.5; }
   }
   .emotion-ball.to-fire {
     animation: flyToFire 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }
   @keyframes flyToFire {
-    0% { top: 50%; left: 50%; transform: translateX(-50%) scale(1); }
-    50% { top: 55%; left: 50%; transform: translateX(-50%) scale(0.8); }
-    100% { top: 68%; left: 50%; transform: translateX(-50%) scale(0.2); opacity: 0; }
+    0% { top: 40%; left: 50%; transform: translateX(-50%) scale(1); opacity: 1; }
+    50% { top: 50%; left: 50%; transform: translateX(-50%) scale(0.65); opacity: 0.8; }
+    100% { top: 58%; left: 50%; transform: translateX(-50%) scale(0.12); opacity: 0; }
   }
 
-  /* Feedback text */
+  /* === FEEDBACK TEXT === */
   .feedback-text {
     position: absolute;
-    top: 42%;
+    top: 36%;
     left: 50%; transform: translateX(-50%);
     color: #fff;
-    font-size: 20px;
-    font-weight: 400;
-    letter-spacing: 3px;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 4px;
     white-space: nowrap;
     animation: feedbackFade 3s ease forwards;
-    z-index: 25;
-    text-shadow: 0 2px 12px rgba(0,0,0,0.8);
+    z-index: 26;
+    text-shadow: 0 0 10px rgba(0,0,0,1), 0 2px 12px rgba(0,0,0,0.9);
+    padding: 12px 22px;
+    background: rgba(0,0,0,0.55);
+    border-radius: 10px;
   }
   @keyframes feedbackFade {
     0% { opacity: 0; } 15% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; }
   }
 
-  /* Shelf */
+  /* === SHELF SCREEN === */
   .shelf-screen {
-    background: linear-gradient(180deg, #1a1a2e 0%, #2d1f0e 100%);
+    background: linear-gradient(180deg, #12101a 0%, #1a150e 100%);
   }
   .shelf-title {
-    color: rgba(255,255,255,0.75);
-    font-size: 16px;
-    letter-spacing: 3px;
-    margin-bottom: 30px;
+    color: rgba(255,220,160,0.8);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    margin-bottom: 28px;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.7);
+    padding: 8px 18px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 8px;
+  }
+  .shelf-rack {
+    position: relative;
+    padding: 28px 18px 22px;
+    background: linear-gradient(180deg, rgba(60,40,20,0.35) 0%, rgba(45,28,14,0.55) 100%);
+    border: 1.5px solid rgba(120,80,40,0.3);
+    border-radius: 12px;
+    box-shadow: inset 0 2px 12px rgba(0,0,0,0.3), 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .shelf-plank {
+    position: absolute;
+    bottom: 0; left: -4px; right: -4px;
+    height: 10px;
+    background: linear-gradient(180deg, #5a3a1e, #3a2510);
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.5);
   }
   .shelf-row {
-    display: flex; gap: 16px;
-    padding: 0 30px;
+    display: flex; gap: 14px;
     justify-content: center;
+    position: relative;
+    z-index: 1;
   }
   .shelf-bottle {
-    width: 55px; height: 85px;
+    width: 58px; height: 100px;
     position: relative;
   }
+  .shelf-bottle .sb-cap {
+    width: 16px; height: 7px;
+    background: linear-gradient(180deg, #9a7a50, #7a5a38);
+    border-radius: 3px 3px 0 0;
+    margin: 0 auto;
+  }
   .shelf-bottle .sb-neck {
-    width: 22px; height: 12px;
-    border: 2px solid rgba(255,255,255,0.2);
+    width: 20px; height: 12px;
+    border: 2px solid rgba(180,220,255,0.16);
     border-bottom: none;
     border-radius: 4px 4px 0 0;
     margin: 0 auto;
-    background: rgba(255,255,255,0.03);
+    background: rgba(180,220,255,0.03);
+    position: relative;
+  }
+  .shelf-bottle .sb-neck::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 3px; height: 7px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.1), transparent);
+    border-radius: 1px;
   }
   .shelf-bottle .sb-body {
-    width: 42px; height: 55px;
-    border: 2px solid rgba(255,255,255,0.2);
-    border-radius: 0 0 8px 8px;
+    width: 46px; height: 58px;
+    border: 2px solid rgba(180,220,255,0.16);
+    border-radius: 2px 2px 8px 8px;
     margin: 0 auto;
-    background: rgba(255,255,255,0.03);
+    background: rgba(180,220,255,0.03);
     position: relative;
     overflow: hidden;
     display: flex;
@@ -368,130 +699,196 @@
     padding: 4px;
     gap: 2px;
   }
+  .shelf-bottle .sb-body::before {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 5px; height: 42px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.1), transparent);
+    border-radius: 2px;
+    z-index: 2;
+    pointer-events: none;
+  }
   .shelf-bottle .sb-label {
     text-align: center;
-    color: rgba(255,255,255,0.65);
-    font-size: 12px;
-    margin-top: 4px;
+    color: rgba(255,220,160,0.55);
+    font-size: 11px;
+    font-weight: 500;
+    margin-top: 5px;
     letter-spacing: 1px;
   }
   .sb-ball {
-    width: 12px; height: 12px;
+    width: 13px; height: 13px;
     border-radius: 50%;
     flex-shrink: 0;
+    box-shadow: 0 0 3px rgba(255,255,255,0.1);
   }
 
-  /* Intro overlay */
+  /* === INTRO OVERLAY === */
   .intro-overlay {
     position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.7);
+    background: rgba(0,0,0,0.75);
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     z-index: 50; cursor: pointer;
-    transition: opacity 0.5s;
+    transition: opacity 0.6s;
   }
   .intro-overlay.hidden { opacity: 0; pointer-events: none; }
   .intro-title {
     color: #fff;
-    font-size: 28px;
-    font-weight: 500;
-    letter-spacing: 6px;
-    margin-bottom: 16px;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 10px;
+    margin-bottom: 12px;
+    text-shadow: 0 0 25px rgba(255,180,80,0.35), 0 2px 12px rgba(0,0,0,0.9);
   }
   .intro-sub {
-    color: rgba(255,255,255,0.65);
-    font-size: 15px;
-    letter-spacing: 2px;
+    color: rgba(255,220,160,0.55);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 4px;
   }
   .intro-hint {
     position: absolute;
     bottom: 60px;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255,255,255,0.4);
     font-size: 14px;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
     animation: pulse 2s infinite;
   }
-  @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 0.7; } }
+  @keyframes pulse { 0%,100% { opacity: 0.3; } 50% { opacity: 0.6; } }
 
-  /* Restart */
+  /* === GAME HUD BAR === */
+  .hud-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 44px;
+    background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.5) 30%, rgba(0,0,0,0.72) 100%);
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+  .hud-text {
+    color: rgba(255,220,160,0.3);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 4px;
+  }
+
+  /* === RESTART === */
   .restart-btn {
     position: absolute;
-    top: 16px; right: 16px;
-    background: rgba(255,255,255,0.1);
+    top: 14px; right: 14px;
+    background: rgba(0,0,0,0.4);
     border: 1px solid rgba(255,255,255,0.15);
     border-radius: 8px;
-    color: rgba(255,255,255,0.75);
+    color: rgba(255,255,255,0.6);
     font-size: 13px;
-    padding: 6px 12px;
+    font-weight: 500;
+    padding: 6px 14px;
     cursor: pointer;
     z-index: 30;
     transition: all 0.3s;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
   }
-  .restart-btn:hover { background: rgba(255,255,255,0.2); }
+  .restart-btn:hover { background: rgba(0,0,0,0.55); border-color: rgba(255,255,255,0.25); }
 
-  /* Particles for fire */
-  .fire-particle {
+  /* === FIRE BURST === */
+  .fire-burst {
     position: absolute;
     border-radius: 50%;
     pointer-events: none;
-    animation: particleRise 1s ease-out forwards;
     z-index: 16;
+    animation: burstUp var(--dur) ease-out forwards;
   }
-  @keyframes particleRise {
+  @keyframes burstUp {
     0% { opacity: 1; transform: translate(0,0) scale(1); }
-    100% { opacity: 0; transform: translate(var(--dx), -60px) scale(0.3); }
+    100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.2); }
   }
 </style>
 </head>
 <body>
 <div id="app">
-  <!-- Background -->
+  <!-- Background layers -->
   <div class="sky" id="sky"></div>
   <div class="stars" id="stars"></div>
   <div class="rain-container" id="rain"></div>
   <div class="lightning" id="lightning"></div>
+
+  <!-- Treeline silhouette (SVG) -->
+  <div class="treeline">
+    <svg viewBox="0 0 390 130" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="0,130 0,90 15,50 30,90 25,70 40,30 55,70 50,85 65,55 80,85 75,70 95,25 115,70 110,60 125,35 140,65 138,80 155,45 170,80 168,65 180,40 195,70 190,55 205,20 220,55 218,70 235,40 250,70 248,60 260,30 275,65 272,80 290,50 305,80 300,65 315,35 330,65 328,80 345,55 355,75 360,60 375,40 390,80 390,130" fill="#0d150a"/>
+      <polygon points="0,130 5,100 20,60 35,95 40,80 55,45 70,80 80,95 95,60 110,90 120,75 135,40 150,75 160,90 175,55 190,85 200,70 215,35 230,70 240,85 255,50 270,80 280,90 295,60 310,85 320,70 335,42 350,72 360,88 375,58 390,90 390,130" fill="#0a1208" opacity="0.7"/>
+    </svg>
+  </div>
+
+  <!-- Ground -->
   <div class="ground"></div>
-  <div class="campfire">
-    <div class="fire-glow"></div>
-    <div class="flame"></div>
-    <div class="fire-base"></div>
+  <div class="ground-glow"></div>
+
+  <!-- Campfire -->
+  <div class="campfire-group">
+    <div class="stone"></div><div class="stone"></div><div class="stone"></div><div class="stone"></div>
+    <div class="stone"></div><div class="stone"></div><div class="stone"></div><div class="stone"></div>
+    <div class="log log-1"></div><div class="log log-2"></div><div class="log log-3"></div><div class="log log-4"></div>
+    <div class="fire-container">
+      <div class="fire-halo"></div>
+      <div class="flame-outer"></div>
+      <div class="flame-mid"></div>
+      <div class="flame-inner"></div>
+      <div class="flame-tip"></div>
+    </div>
   </div>
-  <div class="bottle-area" id="bottleArea">
-    <div class="bottle-neck"></div>
-    <div class="bottle-body" id="bottleBody"></div>
+
+  <!-- Bottle on stone (LEFT of campfire) -->
+  <div class="bottle-scene" id="bottleScene">
+    <div class="bottle-stone"></div>
+    <div class="bottle-deco-pebble"></div>
+    <div class="bottle-deco-stick"></div>
+    <div class="bottle-wrap">
+      <div class="bottle-cap"></div>
+      <div class="bottle-neck"></div>
+      <div class="bottle-body" id="bottleBody"></div>
+    </div>
   </div>
+
+  <!-- Spark particles container -->
+  <div id="sparkContainer" style="position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:11;overflow:hidden;"></div>
 
   <!-- Emotion Ball -->
   <div class="emotion-ball" id="ball"></div>
 
-  <!-- Screen: Weather Selection -->
+  <!-- Screen: Weather -->
   <div class="screen" id="screenWeather">
     <div class="guide-text">幫天空選個樣子。</div>
     <div class="weather-cards">
       <div class="weather-card" data-weather="sunny" onclick="selectWeather('sunny')">
-        <div class="icon">☀️</div>
+        <div class="icon">&#9728;&#65039;</div>
         <div class="label">溫暖的風</div>
       </div>
       <div class="weather-card" data-weather="rainy" onclick="selectWeather('rainy')">
-        <div class="icon">🌧️</div>
+        <div class="icon">&#127783;&#65039;</div>
         <div class="label">雨的味道</div>
       </div>
       <div class="weather-card" data-weather="thunder" onclick="selectWeather('thunder')">
-        <div class="icon">⚡</div>
+        <div class="icon">&#9889;</div>
         <div class="label">遠方雷聲</div>
       </div>
     </div>
   </div>
 
-  <!-- Screen: Sentence Selection -->
+  <!-- Screen: Sentence -->
   <div class="screen" id="screenSentence">
     <div class="guide-text" id="sentenceGuide"></div>
     <div class="sentence-list" id="sentenceList"></div>
   </div>
 
-  <!-- Screen: Choice (Bottle/Fire) -->
+  <!-- Screen: Choice -->
   <div class="screen" id="screenChoice">
-    <div style="height:200px"></div>
+    <div style="height:300px"></div>
     <div class="choice-area">
       <div class="choice-btn" onclick="choose('bottle')">
         <div class="main-text">裝進瓶子</div>
@@ -507,10 +904,13 @@
   <!-- Screen: Shelf -->
   <div class="screen shelf-screen" id="screenShelf">
     <div class="shelf-title">你的瓶子</div>
-    <div class="shelf-row" id="shelfRow"></div>
-    <div style="margin-top: 40px">
-      <div class="choice-btn" onclick="restart()" style="padding:14px 28px">
-        <div class="main-text" style="font-size:14px">再來一天</div>
+    <div class="shelf-rack">
+      <div class="shelf-row" id="shelfRow"></div>
+      <div class="shelf-plank"></div>
+    </div>
+    <div style="margin-top: 36px">
+      <div class="choice-btn" onclick="restart()" style="padding:14px 32px; flex:none;">
+        <div class="main-text" style="font-size:15px">再來一天</div>
       </div>
     </div>
   </div>
@@ -522,133 +922,168 @@
     <div class="intro-hint">點擊開始</div>
   </div>
 
+  <!-- HUD -->
+  <div class="hud-bar">
+    <div class="hud-text">篝 火 營 地</div>
+  </div>
+
   <div class="restart-btn" onclick="restart()" style="display:none" id="restartBtn">重來</div>
 </div>
 
 <script>
-const DATA = {
+var DATA = {
   sunny: {
     color: '#FFD700',
+    glowColor: 'rgba(255,215,0,0.35)',
+    particleColors: ['#FFD700','#FFA500','#FFEE88','#FFE066'],
     floatTexts: ['光落在肩膀上了。','暖暖的，剛剛好。','今天，有溫度。','曬一下也好。','光透過葉子了。'],
     sentences: ['今天有一件小小的好事。','比想像中順利。','沒什麼特別的，但就是還不錯。','有人對我笑了一下。'],
-    guide: '寫下今天。'
+    guide: '寫下今天。',
+    condenseDesc: '陽光正在匯聚...'
   },
   rainy: {
     color: '#4A7FB5',
+    glowColor: 'rgba(74,127,181,0.35)',
+    particleColors: ['#4A7FB5','#6AAAD4','#88CCE8','#3A6A9A'],
     floatTexts: ['讓它下吧。','不急。','安靜也很好。','什麼都不用做。','不必撐傘的那種雨。'],
     sentences: ['不太想說話。','累了，但說不上為什麼。','有些事一直在想。','今天需要安靜一下。'],
-    guide: '記下此刻。'
+    guide: '記下此刻。',
+    condenseDesc: '雨滴正在匯聚...'
   },
   thunder: {
     color: '#9B59B6',
+    glowColor: 'rgba(155,89,182,0.35)',
+    particleColors: ['#9B59B6','#BB77DD','#D4AAEE','#7A3EA0'],
     floatTexts: ['都感受到了。','夠響了。','隱約雷鳴。','天空深呼吸了一下。','只是雲在說話。'],
     sentences: ['有一肚子話想說。','不公平。','受夠了。','為什麼事情會這樣。'],
-    guide: '說出來吧。'
+    guide: '說出來吧。',
+    condenseDesc: '閃電正在匯聚...'
   }
 };
 
-const bottleFeedback = ['這一天被記住了。','不會忘記的。','好好待在這裡。'];
-const fireFeedback = ['感覺輕鬆了一點。','放下也可以。','火帶走了。'];
+var bottleFeedback = ['這一天被記住了。','不會忘記的。','好好待在這裡。'];
+var fireFeedback = ['感覺輕鬆了一點。','放下也可以。','火帶走了。'];
 
-let currentWeather = null;
-let bottleBalls = [];
-let shelfBottles = [
+var currentWeather = null;
+var bottleBalls = [];
+var shelfBottles = [
   { balls: ['#FFD700','#FFD700','#4A7FB5','#9B59B6','#FFD700'], label: '3/10-3/16' },
   { balls: ['#4A7FB5','#4A7FB5','#9B59B6'], label: '3/17-3/23' }
 ];
 
-// Init stars
 function initStars() {
-  const c = document.getElementById('stars');
-  for (let i = 0; i < 30; i++) {
-    const s = document.createElement('div');
+  var c = document.getElementById('stars');
+  for (var i = 0; i < 45; i++) {
+    var s = document.createElement('div');
     s.className = 'star';
     s.style.left = Math.random()*100+'%';
     s.style.top = Math.random()*100+'%';
-    s.style.animationDelay = Math.random()*2+'s';
-    s.style.width = s.style.height = (1+Math.random()*2)+'px';
+    s.style.animationDelay = Math.random()*3+'s';
+    var size = 1 + Math.random()*2.5;
+    s.style.width = size+'px';
+    s.style.height = size+'px';
     c.appendChild(s);
   }
 }
 
-// Init rain
 function initRain() {
-  const c = document.getElementById('rain');
-  for (let i = 0; i < 40; i++) {
-    const r = document.createElement('div');
+  var c = document.getElementById('rain');
+  for (var i = 0; i < 55; i++) {
+    var r = document.createElement('div');
     r.className = 'raindrop';
     r.style.left = Math.random()*100+'%';
-    r.style.height = (15+Math.random()*20)+'px';
-    r.style.animationDuration = (0.5+Math.random()*0.5)+'s';
+    r.style.height = (18+Math.random()*22)+'px';
+    r.style.animationDuration = (0.5+Math.random()*0.4)+'s';
     r.style.animationDelay = Math.random()*2+'s';
     c.appendChild(r);
   }
 }
 
+function startSparks() {
+  var container = document.getElementById('sparkContainer');
+  setInterval(function() {
+    if (Math.random() > 0.5) return;
+    var s = document.createElement('div');
+    s.className = 'spark';
+    var baseX = 46 + Math.random() * 8;
+    var baseY = 56 + Math.random() * 6;
+    s.style.left = baseX + '%';
+    s.style.top = baseY + '%';
+    var size = 2 + Math.random() * 4;
+    s.style.width = size + 'px';
+    s.style.height = size + 'px';
+    var colors = ['#ff5522','#ff7733','#ff9944','#ffbb44','#ffdd55'];
+    s.style.background = colors[Math.floor(Math.random()*colors.length)];
+    var dur = 1.2 + Math.random() * 1.5;
+    s.style.setProperty('--dur', dur + 's');
+    s.style.setProperty('--sx', (Math.random()*60-30) + 'px');
+    s.style.setProperty('--sy', -(50 + Math.random()*80) + 'px');
+    container.appendChild(s);
+    setTimeout(function() { s.remove(); }, dur * 1000 + 100);
+  }, 100);
+}
+
 function startDemo() {
   document.getElementById('intro').classList.add('hidden');
   document.getElementById('restartBtn').style.display = 'block';
-  setTimeout(() => {
+  setTimeout(function() {
     document.getElementById('screenWeather').classList.add('active');
   }, 300);
 }
 
 function selectWeather(w) {
   currentWeather = w;
-  const sky = document.getElementById('sky');
-  sky.className = 'sky ' + w;
+  document.getElementById('sky').className = 'sky ' + w;
 
-  // Fade other cards
-  document.querySelectorAll('.weather-card').forEach(c => {
+  document.querySelectorAll('.weather-card').forEach(function(c) {
     if (c.dataset.weather === w) c.classList.add('selected');
     else c.classList.add('faded');
   });
 
-  // Weather effects
   if (w === 'rainy') document.getElementById('rain').classList.add('active');
   if (w === 'thunder') {
-    setTimeout(() => doLightning(), 800);
-    setTimeout(() => doLightning(), 1500);
+    setTimeout(function() { doLightning(); }, 600);
+    setTimeout(function() { doLightning(); }, 1300);
+    setTimeout(function() { doLightning(); }, 2200);
   }
 
-  // Float text
-  const texts = DATA[w].floatTexts;
-  const text = texts[Math.floor(Math.random()*texts.length)];
-  setTimeout(() => showFloatText(text, '35%'), 800);
+  var texts = DATA[w].floatTexts;
+  var text = texts[Math.floor(Math.random()*texts.length)];
+  setTimeout(function() { showFloatText(text, '28%'); }, 800);
 
-  // Next screen
-  setTimeout(() => {
+  setTimeout(function() {
     document.getElementById('screenWeather').classList.remove('active');
     showSentenceScreen();
   }, 3000);
 }
 
 function doLightning() {
-  const l = document.getElementById('lightning');
+  var l = document.getElementById('lightning');
   l.classList.add('flash');
-  setTimeout(() => l.classList.remove('flash'), 100);
-  setTimeout(() => { l.classList.add('flash'); setTimeout(() => l.classList.remove('flash'), 60); }, 200);
+  setTimeout(function() { l.classList.remove('flash'); }, 80);
+  setTimeout(function() { l.classList.add('flash'); setTimeout(function() { l.classList.remove('flash'); }, 50); }, 180);
 }
 
 function showFloatText(text, top) {
-  const el = document.createElement('div');
+  var el = document.createElement('div');
   el.className = 'float-text';
   el.textContent = text;
   el.style.top = top;
+  el.style.left = '50%';
   document.getElementById('app').appendChild(el);
-  setTimeout(() => el.remove(), 3000);
+  setTimeout(function() { el.remove(); }, 3500);
 }
 
 function showSentenceScreen() {
-  const d = DATA[currentWeather];
+  var d = DATA[currentWeather];
   document.getElementById('sentenceGuide').textContent = d.guide;
-  const list = document.getElementById('sentenceList');
+  var list = document.getElementById('sentenceList');
   list.innerHTML = '';
-  d.sentences.forEach(s => {
-    const btn = document.createElement('div');
+  d.sentences.forEach(function(s) {
+    var btn = document.createElement('div');
     btn.className = 'sentence-btn';
     btn.textContent = s;
-    btn.onclick = () => selectSentence(s);
+    btn.onclick = function() { selectSentence(s); };
     list.appendChild(btn);
   });
   document.getElementById('screenSentence').classList.add('active');
@@ -656,41 +1091,98 @@ function showSentenceScreen() {
 
 function selectSentence(s) {
   document.getElementById('screenSentence').classList.remove('active');
-  // Drop ball
-  setTimeout(() => dropBall(), 500);
+  setTimeout(function() { condenseBall(); }, 500);
 }
 
-function dropBall() {
-  const ball = document.getElementById('ball');
-  ball.style.background = `radial-gradient(circle at 35% 35%, ${DATA[currentWeather].color}cc, ${DATA[currentWeather].color}88)`;
-  ball.style.boxShadow = `0 0 25px ${DATA[currentWeather].color}66`;
-  ball.className = 'emotion-ball drop';
-  ball.style.opacity = '0';
+function condenseBall() {
+  var d = DATA[currentWeather];
+  var app = document.getElementById('app');
+  var ball = document.getElementById('ball');
 
-  setTimeout(() => {
+  var particleCount = 24;
+  var centerX = 195;
+  var centerY = 210;
+  for (var i = 0; i < particleCount; i++) {
+    var p = document.createElement('div');
+    p.className = 'condense-particle';
+    var angle = (Math.PI * 2 / particleCount) * i + Math.random() * 0.4;
+    var radius = 90 + Math.random() * 120;
+    var startX = centerX + Math.cos(angle) * radius;
+    var startY = centerY + Math.sin(angle) * radius - 50;
+    p.style.left = startX + 'px';
+    p.style.top = startY + 'px';
+    var size = 4 + Math.random() * 10;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.background = d.particleColors[Math.floor(Math.random()*d.particleColors.length)];
+    p.style.boxShadow = '0 0 8px ' + d.color;
+    p.style.setProperty('--tx', (centerX - startX) + 'px');
+    p.style.setProperty('--ty', (centerY - startY) + 'px');
+    var dur = 0.7 + Math.random() * 0.9;
+    p.style.setProperty('--dur', dur + 's');
+    p.style.animationDelay = (Math.random() * 0.5) + 's';
+    app.appendChild(p);
+    (function(el, d) { setTimeout(function() { el.remove(); }, (d + 0.5) * 1000 + 500); })(p, dur);
+  }
+
+  var glow = document.createElement('div');
+  glow.className = 'ball-glow';
+  glow.style.background = 'radial-gradient(circle, ' + d.glowColor + ', transparent 70%)';
+  app.appendChild(glow);
+  setTimeout(function() { glow.remove(); }, 2500);
+
+  setTimeout(function() {
+    ball.style.background = 'radial-gradient(circle at 35% 35%, ' + d.color + 'ee, ' + d.color + 'aa, ' + d.color + '66)';
+    ball.style.boxShadow = '0 0 35px ' + d.color + '55, 0 0 70px ' + d.color + '22';
+    ball.className = 'emotion-ball condense';
+
+    var label = document.createElement('div');
+    label.className = 'ball-label';
+    label.textContent = '今天的重量';
+    app.appendChild(label);
+    setTimeout(function() {
+      label.style.animation = 'feedbackFade 2s ease forwards';
+      setTimeout(function() { label.remove(); }, 2000);
+    }, 2200);
+  }, 600);
+
+  setTimeout(function() {
     document.getElementById('screenChoice').classList.add('active');
-  }, 1200);
+  }, 2800);
 }
 
 function choose(type) {
   document.getElementById('screenChoice').classList.remove('active');
-  const ball = document.getElementById('ball');
+  document.querySelectorAll('.ball-label').forEach(function(l) { l.remove(); });
+
+  var ball = document.getElementById('ball');
 
   if (type === 'bottle') {
     ball.className = 'emotion-ball to-bottle';
     bottleBalls.push(DATA[currentWeather].color);
-    updateBottle();
-    const fb = bottleFeedback[Math.floor(Math.random()*bottleFeedback.length)];
-    setTimeout(() => showFloatText(fb, '42%'), 1000);
+    setTimeout(function() { updateBottle(); }, 800);
+    var fb = bottleFeedback[Math.floor(Math.random()*bottleFeedback.length)];
+    setTimeout(function() {
+      var el = document.createElement('div');
+      el.className = 'feedback-text';
+      el.textContent = fb;
+      document.getElementById('app').appendChild(el);
+      setTimeout(function() { el.remove(); }, 3000);
+    }, 1000);
   } else {
     ball.className = 'emotion-ball to-fire';
-    // Fire particles
-    setTimeout(() => spawnFireParticles(), 700);
-    const fb = fireFeedback[Math.floor(Math.random()*fireFeedback.length)];
-    setTimeout(() => showFloatText(fb, '42%'), 1000);
+    setTimeout(function() { spawnFireBurst(); }, 700);
+    var fb2 = fireFeedback[Math.floor(Math.random()*fireFeedback.length)];
+    setTimeout(function() {
+      var el = document.createElement('div');
+      el.className = 'feedback-text';
+      el.textContent = fb2;
+      document.getElementById('app').appendChild(el);
+      setTimeout(function() { el.remove(); }, 3000);
+    }, 1000);
   }
 
-  setTimeout(() => {
+  setTimeout(function() {
     ball.className = 'emotion-ball';
     ball.style.opacity = '0';
     showShelf();
@@ -698,79 +1190,79 @@ function choose(type) {
 }
 
 function updateBottle() {
-  const body = document.getElementById('bottleBody');
+  var body = document.getElementById('bottleBody');
   body.innerHTML = '';
-  bottleBalls.forEach(c => {
-    const b = document.createElement('div');
+  bottleBalls.forEach(function(c) {
+    var b = document.createElement('div');
     b.className = 'bottle-ball';
-    b.style.background = `radial-gradient(circle at 35% 35%, ${c}cc, ${c}88)`;
-    b.style.width = '12px';
-    b.style.height = '12px';
-    b.style.position = 'relative';
-    b.style.left = (5+Math.random()*10)+'px';
+    b.style.background = 'radial-gradient(circle at 35% 35%, '+c+'ee, '+c+'88)';
+    b.style.marginLeft = (Math.random()*6-3) + 'px';
     body.appendChild(b);
   });
 }
 
-function spawnFireParticles() {
-  const color = DATA[currentWeather].color;
-  for (let i = 0; i < 8; i++) {
-    const p = document.createElement('div');
-    p.className = 'fire-particle';
-    p.style.left = (45+Math.random()*10)+'%';
-    p.style.top = '70%';
-    p.style.width = p.style.height = (4+Math.random()*6)+'px';
-    p.style.background = color;
-    p.style.setProperty('--dx', (Math.random()*40-20)+'px');
-    p.style.animationDelay = (Math.random()*0.3)+'s';
-    document.getElementById('app').appendChild(p);
-    setTimeout(() => p.remove(), 1500);
+function spawnFireBurst() {
+  var color = DATA[currentWeather].color;
+  var app = document.getElementById('app');
+  for (var i = 0; i < 14; i++) {
+    var p = document.createElement('div');
+    p.className = 'fire-burst';
+    p.style.left = (46 + Math.random()*8) + '%';
+    p.style.top = (56 + Math.random()*5) + '%';
+    var size = 4 + Math.random() * 9;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.background = i % 3 === 0 ? color : (i % 3 === 1 ? '#ff8833' : '#ffcc44');
+    p.style.boxShadow = '0 0 5px ' + color;
+    var dur = 0.6 + Math.random() * 0.8;
+    p.style.setProperty('--dur', dur + 's');
+    p.style.setProperty('--dx', (Math.random()*70-35) + 'px');
+    p.style.setProperty('--dy', -(35 + Math.random()*60) + 'px');
+    p.style.animationDelay = (Math.random()*0.3) + 's';
+    app.appendChild(p);
+    (function(el, d) { setTimeout(function() { el.remove(); }, (d+0.3)*1000 + 300); })(p, dur);
   }
 }
 
 function showShelf() {
-  // Build shelf
-  const row = document.getElementById('shelfRow');
+  var row = document.getElementById('shelfRow');
   row.innerHTML = '';
-  const allBottles = [...shelfBottles, { balls: [...bottleBalls], label: '3/24-now' }];
-  allBottles.forEach(b => {
-    const el = document.createElement('div');
+  var allBottles = shelfBottles.concat([{ balls: bottleBalls.slice(), label: '3/24-now' }]);
+  allBottles.forEach(function(b) {
+    var el = document.createElement('div');
     el.className = 'shelf-bottle';
-    let ballsHTML = '';
-    b.balls.forEach(c => {
-      ballsHTML += `<div class="sb-ball" style="background:radial-gradient(circle at 35% 35%,${c}cc,${c}88)"></div>`;
+    var ballsHTML = '';
+    b.balls.forEach(function(c) {
+      ballsHTML += '<div class="sb-ball" style="background:radial-gradient(circle at 35% 35%,'+c+'ee,'+c+'66); box-shadow: 0 0 4px '+c+'44"></div>';
     });
-    el.innerHTML = `
-      <div class="sb-neck"></div>
-      <div class="sb-body">${ballsHTML}</div>
-      <div class="sb-label">${b.label}</div>
-    `;
+    el.innerHTML = '<div class="sb-cap"></div><div class="sb-neck"></div><div class="sb-body">'+ballsHTML+'</div><div class="sb-label">'+b.label+'</div>';
     row.appendChild(el);
   });
   document.getElementById('screenShelf').classList.add('active');
 }
 
 function restart() {
-  // Reset everything
   currentWeather = null;
   bottleBalls = [];
   document.getElementById('sky').className = 'sky';
   document.getElementById('rain').classList.remove('active');
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.weather-card').forEach(c => {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.weather-card').forEach(function(c) {
     c.classList.remove('selected','faded');
   });
-  const ball = document.getElementById('ball');
+  var ball = document.getElementById('ball');
   ball.className = 'emotion-ball';
   ball.style.opacity = '0';
   document.getElementById('bottleBody').innerHTML = '';
-  setTimeout(() => {
+  document.querySelectorAll('.ball-label').forEach(function(l) { l.remove(); });
+  setTimeout(function() {
     document.getElementById('screenWeather').classList.add('active');
   }, 300);
 }
 
 initStars();
 initRain();
+startSparks();
 </script>
 </body>
 </html>
