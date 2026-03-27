@@ -3,16 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>情緒羅盤 — 遊戲原型</title>
+<title>情緒四象限 — 遊戲原型</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
   *{margin:0;padding:0;box-sizing:border-box}
   :root{
     --bg:#0f0e17;--surface:#1a1932;--panel:#16152b;
-    --q-sun:rgba(255,200,60,.18);--q-storm:rgba(100,160,255,.18);
-    --q-rain:rgba(120,90,200,.18);--q-moon:rgba(80,210,180,.18);
-    --q-sun-solid:#ffcb3c;--q-storm-solid:#64a0ff;
-    --q-rain-solid:#7858c8;--q-moon-solid:#50d2b4;
+    --q-green:rgba(74,222,128,.18);--q-yellow:rgba(251,191,36,.18);
+    --q-blue:rgba(96,165,250,.18);--q-red:rgba(248,113,113,.18);
     --text:#fffffe;--text-dim:#7a7a9e;--accent:#7f5af0;
     --gold:#f0c040;--hp-green:#4ade80;--hp-bg:rgba(255,255,255,.08);
     --mint:#B2DFDB;--mint-glow:rgba(178,223,219,.35);
@@ -50,178 +48,125 @@
   .nav-tab.active .nav-icon{transform:scale(1.15)}
   .nav-tab.active::after{content:'';display:block;width:4px;height:4px;border-radius:50%;background:var(--accent);margin-top:1px;box-shadow:0 0 6px var(--accent)}
 
-  /* ========== Compass Screen ========== */
-  #compass{padding:8px 16px 16px;justify-content:flex-start}
-  .compass-header{text-align:center;margin-bottom:36px}
-  .compass-header h2{font-size:20px;font-weight:900;letter-spacing:1px;
-    background:linear-gradient(135deg,#fff,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-  .compass-header p{font-size:12px;color:var(--text-dim);margin-top:2px}
-
-  /* Compass Container */
-  .compass-wrap{position:relative;width:290px;height:290px;margin:0 auto}
-
-  /* Outer decorative ring */
-  .compass-ring{position:absolute;inset:-20px;border-radius:50%;border:1px solid rgba(127,90,240,.15);
-    background:conic-gradient(from 0deg,rgba(255,200,60,.05),rgba(100,160,255,.05),rgba(120,90,200,.05),rgba(80,210,180,.05),rgba(255,200,60,.05))}
-  .compass-ring::before{content:'';position:absolute;inset:6px;border-radius:50%;border:1px solid rgba(255,255,255,.05)}
-  .compass-ring::after{content:'';position:absolute;inset:12px;border-radius:50%;border:1px dashed rgba(255,255,255,.06)}
-
-  /* Tick marks */
-  .compass-ticks{position:absolute;inset:-20px}
-  .compass-tick{position:absolute;width:2px;height:8px;background:rgba(255,255,255,.12);left:50%;top:0;transform-origin:50% calc(145px + 20px);border-radius:1px}
-
-  /* Inner quadrant disc */
-  .compass-disc{position:absolute;inset:0;border-radius:50%;overflow:hidden;
-    background:radial-gradient(circle at 50% 50%,rgba(26,25,50,.8),rgba(15,14,23,.95));
-    box-shadow:inset 0 0 60px rgba(0,0,0,.5),0 0 40px rgba(127,90,240,.06)}
-
-  /* Quadrant zones */
-  .quad-zone{position:absolute;width:50%;height:50%;transition:opacity .4s ease}
-  .quad-zone.q-sun{top:0;right:0;background:radial-gradient(circle at 0% 100%,rgba(255,200,60,.03),rgba(255,200,60,.14))}
-  .quad-zone.q-storm{top:0;left:0;background:radial-gradient(circle at 100% 100%,rgba(100,160,255,.03),rgba(100,160,255,.14))}
-  .quad-zone.q-rain{bottom:0;left:0;background:radial-gradient(circle at 100% 0%,rgba(120,90,200,.03),rgba(120,90,200,.14))}
-  .quad-zone.q-moon{bottom:0;right:0;background:radial-gradient(circle at 0% 0%,rgba(80,210,180,.03),rgba(80,210,180,.14))}
-  .quad-zone.dimmed{opacity:.25}
-  .quad-zone.highlight{opacity:1}
-
-  /* Quadrant labels */
-  .quad-label{position:absolute;font-size:11px;font-weight:700;z-index:5;pointer-events:none;text-align:center;line-height:1.3;opacity:.6;transition:opacity .4s,transform .4s}
-  .quad-label.active-label{opacity:1;transform:scale(1.08)}
-  .ql-sun{top:18%;right:10%;color:var(--q-sun-solid)}
-  .ql-storm{top:18%;left:10%;color:var(--q-storm-solid)}
-  .ql-rain{bottom:18%;left:10%;color:var(--q-rain-solid)}
-  .ql-moon{bottom:18%;right:10%;color:var(--q-moon-solid)}
-  .quad-label .ql-icon{font-size:20px;display:block;margin-bottom:2px}
-
-  /* Glowing axis lines */
-  .axis-glow{position:absolute;z-index:4;pointer-events:none}
-  .axis-h{top:50%;left:8%;right:8%;height:1px;
-    background:linear-gradient(90deg,transparent,rgba(255,255,255,.18) 20%,rgba(255,255,255,.22) 50%,rgba(255,255,255,.18) 80%,transparent);
-    box-shadow:0 0 8px rgba(255,255,255,.06)}
-  .axis-v{left:50%;top:8%;bottom:8%;width:1px;
-    background:linear-gradient(180deg,transparent,rgba(255,255,255,.18) 20%,rgba(255,255,255,.22) 50%,rgba(255,255,255,.18) 80%,transparent);
-    box-shadow:0 0 8px rgba(255,255,255,.06)}
-
-  /* Axis endpoint labels */
-  .axis-end{position:absolute;font-size:9px;color:var(--text-dim);font-weight:700;z-index:6;pointer-events:none;white-space:nowrap;letter-spacing:.5px}
-  .ae-top{top:-30px;left:50%;transform:translateX(-50%)}
-  .ae-bottom{bottom:-30px;left:50%;transform:translateX(-50%)}
-  .ae-left{display:none}
-  .ae-right{display:none}
-
-  /* Canvas overlay */
-  .compass-canvas{position:absolute;inset:0;border-radius:50%;cursor:crosshair;z-index:10}
-
-  /* Draggable dot */
-  .compass-dot{position:absolute;width:30px;height:30px;border-radius:50%;z-index:20;pointer-events:none;
-    transform:translate(-50%,-50%) scale(0);transition:transform .35s cubic-bezier(.34,1.56,.64,1);will-change:left,top}
-  .compass-dot.placed{transform:translate(-50%,-50%) scale(1)}
-  .compass-dot-inner{width:100%;height:100%;border-radius:50%;
-    background:radial-gradient(circle at 35% 35%,#fff,var(--mint) 60%,rgba(178,223,219,.6));
-    box-shadow:0 0 20px var(--mint-glow),0 0 40px rgba(178,223,219,.2);
-    transition:box-shadow .2s}
-  .compass-dot.dragging .compass-dot-inner{box-shadow:0 0 30px var(--mint-glow),0 0 60px rgba(178,223,219,.35)}
-  .compass-dot-ring{position:absolute;inset:-8px;border-radius:50%;border:2px solid var(--mint);opacity:.5;animation:dotPing 2s ease-out infinite}
-  @keyframes dotPing{0%{transform:scale(1);opacity:.5}100%{transform:scale(2);opacity:0}}
-
-  /* Trail particles */
-  .trail-particle{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--mint);opacity:0;pointer-events:none;z-index:15}
-
-  /* Readout */
-  .compass-readout{margin-top:8px;text-align:center;min-height:24px}
-  .compass-readout .val{font-size:14px;font-weight:700;color:var(--mint);opacity:0;transition:opacity .3s;
-    text-shadow:0 0 12px var(--mint-glow)}
-  .compass-readout .val.show{opacity:1}
-
-  /* Action buttons */
-  .compass-actions{margin-top:8px;display:flex;gap:12px}
-  .btn{padding:12px 32px;border:none;border-radius:50px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:transform .12s,box-shadow .12s;position:relative;overflow:hidden}
+  /* ========== Welcome Screen ========== */
+  #welcome{justify-content:center;background:radial-gradient(ellipse at 50% 60%,#1e1b4b 0%,var(--bg) 70%)}
+  .welcome-icon{font-size:72px;margin-bottom:20px;animation:float 3s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  .welcome-title{font-size:28px;font-weight:900;letter-spacing:2px;margin-bottom:10px}
+  .welcome-sub{font-size:15px;color:var(--text-dim);margin-bottom:40px;text-align:center;line-height:1.6;padding:0 32px}
+  .btn{padding:14px 40px;border:none;border-radius:60px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;transition:transform .15s,box-shadow .15s}
   .btn:active{transform:scale(.93)}
+  .btn-primary{background:linear-gradient(135deg,#7f5af0,#2cb67d);color:#fff;box-shadow:0 4px 24px rgba(127,90,240,.35)}
   .btn-secondary{background:rgba(255,255,255,.06);color:var(--text);border:1px solid rgba(255,255,255,.1)}
-  .btn-confirm{background:linear-gradient(135deg,#7f5af0,#2cb67d);color:#fff;
-    box-shadow:0 4px 20px rgba(127,90,240,.3);font-size:16px;padding:14px 40px}
-  .btn-confirm.disabled{opacity:.3;pointer-events:none}
+  .btn-mint{background:linear-gradient(135deg,#2cb67d,#72efdd);color:#0f0e17;box-shadow:0 4px 24px rgba(44,182,125,.3)}
 
-  /* ========== History mini section ========== */
-  .history-section{width:100%;max-width:330px;margin:12px auto 0;padding:12px 14px;
-    background:var(--surface);border-radius:14px;border:1px solid rgba(255,255,255,.04)}
-  .history-title{font-size:11px;color:var(--text-dim);font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px}
-  .history-track{position:relative;height:55px;width:100%}
-  .history-canvas{width:100%;height:100%}
+  /* ========== Quadrant Screen ========== */
+  #quadrant{padding:16px;justify-content:flex-start;padding-top:12px}
+  .q-header{text-align:center;margin-bottom:12px}
+  .q-header h2{font-size:20px;font-weight:900;letter-spacing:1px;
+    background:linear-gradient(135deg,#fff,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .q-header p{font-size:12px;color:var(--text-dim);margin-top:2px}
+  .q-container{position:relative;width:100%;aspect-ratio:1/1;max-width:320px;margin:0 auto}
+  .q-grid{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;border-radius:16px;overflow:hidden}
+  .q-cell{display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:rgba(255,255,255,.5);padding:12px;text-align:center;line-height:1.4;flex-direction:column;gap:2px}
+  .q-cell:nth-child(1){background:var(--q-green);border-bottom:1px solid rgba(255,255,255,.06);border-right:1px solid rgba(255,255,255,.06)}
+  .q-cell:nth-child(2){background:var(--q-yellow);border-bottom:1px solid rgba(255,255,255,.06)}
+  .q-cell:nth-child(3){background:var(--q-blue);border-right:1px solid rgba(255,255,255,.06)}
+  .q-cell:nth-child(4){background:var(--q-red)}
+  .q-cell .emoji{font-size:26px;display:block}
+  .q-canvas{position:absolute;inset:0;border-radius:16px;cursor:crosshair;z-index:2}
+  .axis-label{position:absolute;font-size:11px;color:var(--text-dim);font-weight:700;z-index:3;pointer-events:none;white-space:nowrap}
+  .axis-y-top{top:-22px;left:50%;transform:translateX(-50%)}
+  .axis-y-bottom{bottom:-22px;left:50%;transform:translateX(-50%)}
+  .axis-x-left{left:-8px;top:50%;transform:translateY(-50%) rotate(-90deg)}
+  .axis-x-right{right:-8px;top:50%;transform:translateY(-50%) rotate(90deg)}
+  .my-dot{position:absolute;width:22px;height:22px;border-radius:50%;background:var(--mint);box-shadow:0 0 16px var(--mint-glow),0 0 40px var(--mint-glow);z-index:10;pointer-events:none;transform:translate(-50%,-50%) scale(0);transition:transform .3s cubic-bezier(.34,1.56,.64,1);will-change:left,top}
+  .my-dot.placed{transform:translate(-50%,-50%) scale(1)}
+  .my-dot::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--mint);opacity:.5;animation:ping 1.5s ease-out infinite}
+  @keyframes ping{0%{transform:scale(1);opacity:.5}100%{transform:scale(2.2);opacity:0}}
+  .q-readout{margin-top:14px;text-align:center;min-height:28px}
+  .q-readout .val{font-size:14px;color:var(--mint);font-weight:700;opacity:0;transition:opacity .3s;text-shadow:0 0 10px var(--mint-glow)}
+  .q-readout .val.show{opacity:1}
+  .q-zone-badge{font-size:16px;font-weight:900;opacity:0;transition:opacity .3s;margin-bottom:2px;letter-spacing:1px}
+  .q-zone-badge.show{opacity:1}
+  .q-actions{margin-top:10px;display:flex;gap:12px}
 
-  /* ========== Card Overlay ========== */
-  .card-overlay{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
-    background:rgba(0,0,0,0);pointer-events:none;visibility:hidden;transition:background .5s ease,visibility 0s .5s}
-  .card-overlay.active{background:rgba(0,0,0,.78);pointer-events:auto;visibility:visible;transition:background .5s ease,visibility 0s 0s}
+  /* ========== Result Screen ========== */
+  #result{padding:16px;justify-content:flex-start;padding-top:12px}
+  .r-title{font-size:18px;font-weight:900;margin-bottom:12px;text-align:center;
+    background:linear-gradient(135deg,#fff,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .r-quadrant-wrap{position:relative;width:100%;max-width:260px;aspect-ratio:1/1;margin:0 auto 14px}
+  .r-quadrant-bg{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;border-radius:14px;overflow:hidden}
+  .r-quadrant-bg div:nth-child(1){background:var(--q-green)}
+  .r-quadrant-bg div:nth-child(2){background:var(--q-yellow)}
+  .r-quadrant-bg div:nth-child(3){background:var(--q-blue)}
+  .r-quadrant-bg div:nth-child(4){background:var(--q-red)}
+  .r-canvas{position:absolute;inset:0;border-radius:14px;z-index:2}
+  .r-my-dot{position:absolute;width:16px;height:16px;border-radius:50%;background:var(--mint);box-shadow:0 0 12px var(--mint-glow);z-index:10;pointer-events:none;transform:translate(-50%,-50%)}
+  .r-my-dot::after{content:'';position:absolute;inset:-5px;border-radius:50%;border:2px solid var(--mint);opacity:.5;animation:ping 1.5s ease-out infinite}
+  .stats{width:100%;max-width:320px;display:flex;flex-direction:column;gap:8px}
+  .stat-card{background:var(--surface);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;opacity:0;transform:translateY(12px);transition:opacity .4s ease,transform .4s ease;border:1px solid rgba(255,255,255,.04)}
+  .stat-card.show{opacity:1;transform:translateY(0)}
+  .stat-icon{font-size:28px;flex-shrink:0}
+  .stat-body{flex:1}
+  .stat-label{font-size:11px;color:var(--text-dim);margin-bottom:1px}
+  .stat-value{font-size:16px;font-weight:900}
+  .stat-value .highlight{color:var(--mint)}
+  .weather-card{background:linear-gradient(135deg,#1e1b4b,#312e81)!important;border:1px solid rgba(127,90,240,.2)!important}
+  .r-actions{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 
-  .card-flip{perspective:1000px;width:290px;height:410px}
-  .card-flip-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;
-    transform:rotateY(180deg);transition:transform .8s cubic-bezier(.4,.0,.2,1)}
-  .card-overlay.active .card-flip-inner{transform:rotateY(0deg)}
+  /* ========== Trajectory Screen ========== */
+  #trajectory{padding:16px;justify-content:flex-start;padding-top:12px}
+  .t-title{font-size:18px;font-weight:900;margin-bottom:2px;text-align:center;
+    background:linear-gradient(135deg,#fff,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .t-sub{font-size:12px;color:var(--text-dim);margin-bottom:14px;text-align:center}
+  .t-chart-wrap{position:relative;width:100%;max-width:300px;aspect-ratio:1/1;margin:0 auto 12px}
+  .t-quadrant-bg{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;border-radius:14px;overflow:hidden}
+  .t-quadrant-bg div:nth-child(1){background:var(--q-green)}
+  .t-quadrant-bg div:nth-child(2){background:var(--q-yellow)}
+  .t-quadrant-bg div:nth-child(3){background:var(--q-blue)}
+  .t-quadrant-bg div:nth-child(4){background:var(--q-red)}
+  .t-canvas{position:absolute;inset:0;border-radius:14px;z-index:2}
+  .t-legend{display:flex;gap:20px;justify-content:center;margin-bottom:10px}
+  .t-legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim)}
+  .t-legend-dot{width:10px;height:10px;border-radius:50%}
+  .t-insight{background:var(--surface);border-radius:12px;padding:14px 16px;max-width:320px;width:100%;text-align:center;font-size:13px;line-height:1.6;color:var(--text-dim);margin-bottom:14px;border:1px solid rgba(255,255,255,.04)}
+  .t-insight b{color:var(--text);font-weight:700}
+  .t-actions{display:flex;gap:10px}
 
-  .card-back{position:absolute;inset:0;backface-visibility:hidden;transform:rotateY(180deg);
-    border-radius:20px;background:linear-gradient(135deg,#1e1b4b,#2a2650);
-    border:2px solid rgba(127,90,240,.3);
-    display:flex;align-items:center;justify-content:center}
-  .card-back-design{width:80%;height:80%;border-radius:14px;border:1px solid rgba(127,90,240,.15);
-    background:repeating-conic-gradient(rgba(127,90,240,.05) 0% 25%,transparent 0% 50%) 50%/40px 40px;
-    display:flex;align-items:center;justify-content:center;font-size:48px}
-
-  .card-front{position:absolute;inset:0;backface-visibility:hidden;border-radius:20px;overflow:hidden;
-    border:2px solid rgba(127,90,240,.25);display:flex;flex-direction:column}
-  .card-front-bg{position:absolute;inset:0;z-index:0}
-  .card-content{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 24px;text-align:center}
-  .card-icon{font-size:52px;margin-bottom:6px;filter:drop-shadow(0 0 20px rgba(255,255,255,.3))}
-  .card-quad-name{font-size:22px;font-weight:900;margin-bottom:10px;
-    background:linear-gradient(135deg,#fff,#c8c8ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-  .card-phrase{font-size:14px;color:rgba(255,255,255,.8);line-height:1.6;margin-bottom:16px}
-  .card-suggest{font-size:12px;color:var(--text-dim);background:rgba(255,255,255,.05);padding:10px 14px;border-radius:12px;line-height:1.5;border:1px solid rgba(255,255,255,.06)}
-  .card-suggest b{color:var(--gold);font-weight:700}
-  .card-rarity{position:absolute;top:0;left:0;right:0;height:4px;z-index:2}
-
-  .card-streak{margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:6px}
-  .card-streak-label{font-size:11px;color:var(--text-dim)}
-  .streak-dots{display:flex;gap:8px}
-  .streak-dot{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);transition:all .3s}
-  .streak-dot.filled{background:var(--accent);border-color:var(--accent);box-shadow:0 0 8px rgba(127,90,240,.4)}
-  .streak-dot.today{border-color:var(--gold);box-shadow:0 0 8px rgba(240,192,64,.4)}
-
-  .card-bottom{padding:14px 24px 20px;text-align:center;position:relative;z-index:1}
-  .btn-collect{width:100%;padding:14px;border:none;border-radius:50px;font-size:16px;font-weight:900;font-family:inherit;cursor:pointer;
-    background:linear-gradient(135deg,#7f5af0,#2cb67d);color:#fff;
-    box-shadow:0 4px 20px rgba(127,90,240,.3);transition:transform .12s}
-  .btn-collect:active{transform:scale(.95)}
-
-  /* ========== Effects ========== */
-  .shockwave{position:fixed;z-index:90;border-radius:50%;pointer-events:none;
-    border:2px solid rgba(255,255,255,.3);animation:shockExpand .7s ease-out forwards}
-  @keyframes shockExpand{0%{width:0;height:0;opacity:1}100%{width:400px;height:400px;opacity:0;margin-left:-200px;margin-top:-200px}}
-
-  .particle{position:fixed;pointer-events:none;z-index:110;border-radius:50%;animation:particleFly 1s ease-out forwards}
-  @keyframes particleFly{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0)}}
-
-  .star-particle{position:fixed;pointer-events:none;z-index:110;font-size:16px;animation:starCollect 1s ease-in forwards}
-  @keyframes starCollect{0%{opacity:1;transform:translate(0,0) scale(1)}60%{opacity:1;transform:translate(var(--tx),var(--ty)) scale(1.2)}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0)}}
-
-  .pulse-overlay{position:fixed;inset:0;z-index:80;pointer-events:none;
-    background:radial-gradient(circle at 50% 50%,rgba(127,90,240,.15),transparent 70%);
-    opacity:0;animation:pulseFlash .5s ease-out forwards}
-  @keyframes pulseFlash{0%{opacity:1;transform:scale(.8)}100%{opacity:0;transform:scale(1.3)}}
+  /* ========== Heatmap Screen ========== */
+  #heatmap{padding:16px;justify-content:flex-start;padding-top:12px}
+  .h-badge{display:inline-block;background:rgba(127,90,240,.15);color:#a78bfa;font-size:11px;font-weight:700;padding:3px 12px;border-radius:20px;margin-bottom:8px;border:1px solid rgba(127,90,240,.25)}
+  .h-title{font-size:18px;font-weight:900;margin-bottom:2px;text-align:center;
+    background:linear-gradient(135deg,#fff,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .h-weather{font-size:42px;margin:8px 0 2px}
+  .h-weather-name{font-size:16px;font-weight:700;margin-bottom:12px}
+  .h-quadrant-wrap{position:relative;width:100%;max-width:220px;aspect-ratio:1/1;margin:0 auto 14px}
+  .h-quadrant-bg{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;border-radius:14px;overflow:hidden}
+  .h-quadrant-bg div:nth-child(1){background:var(--q-green)}
+  .h-quadrant-bg div:nth-child(2){background:var(--q-yellow)}
+  .h-quadrant-bg div:nth-child(3){background:var(--q-blue)}
+  .h-quadrant-bg div:nth-child(4){background:var(--q-red)}
+  .h-canvas{position:absolute;inset:0;border-radius:14px;z-index:2}
+  .h-stats{width:100%;max-width:320px;display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+  .h-bar-row{display:flex;align-items:center;gap:8px;font-size:12px}
+  .h-bar-label{width:44px;text-align:right;color:var(--text-dim);flex-shrink:0}
+  .h-bar{flex:1;height:20px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,.05)}
+  .h-bar-fill{height:100%;border-radius:6px;transition:width 1s ease}
+  .h-bar-pct{width:36px;font-weight:700;font-size:12px}
 
   /* Responsive */
   @media(max-height:720px){
-    .compass-wrap{width:250px;height:250px}
-    .compass-ring{inset:-16px}
-    .compass-tick{transform-origin:50% calc(125px + 16px)}
+    .q-container{max-width:280px}
+    .r-quadrant-wrap{max-width:220px}
+    .t-chart-wrap{max-width:260px}
+    .h-quadrant-wrap{max-width:190px}
+    .welcome-icon{font-size:56px}
+    .welcome-title{font-size:24px}
   }
   @media(max-height:640px){
-    .compass-wrap{width:220px;height:220px}
-    .compass-ring{inset:-14px}
-    .compass-tick{transform-origin:50% calc(110px + 14px)}
     .hud{padding:6px 12px 4px}
     .hud-avatar{width:34px;height:34px;font-size:16px}
-    .history-section{margin-top:8px;padding:10px 12px}
-    .history-track{height:45px}
   }
 </style>
 </head>
@@ -246,60 +191,124 @@
 
   <!-- ========== Main Content ========== -->
   <div class="main-content">
-    <div id="compass" class="screen active">
-      <div class="compass-header">
-        <h2>情緒羅盤</h2>
-        <p>把光點拖到你現在的位置</p>
+
+    <!-- Welcome -->
+    <div id="welcome" class="screen active">
+      <div class="welcome-icon">🫧</div>
+      <div class="welcome-title">情緒四象限</div>
+      <div class="welcome-sub">點一個點，記錄你現在的心情。<br>只需要 1 秒鐘。</div>
+      <button class="btn btn-primary" onclick="goTo('quadrant')">開始</button>
+    </div>
+
+    <!-- Quadrant Input -->
+    <div id="quadrant" class="screen">
+      <div class="q-header">
+        <h2>今天的你，在哪裡？</h2>
+        <p>在座標上點擊或拖曳你現在的位置</p>
       </div>
-
-      <div class="compass-wrap" id="compassWrap">
-        <div class="compass-ring" id="compassRing"></div>
-        <div class="compass-ticks" id="compassTicks"></div>
-
-        <div class="compass-disc" id="compassDisc">
-          <div class="quad-zone q-sun" id="zSun"></div>
-          <div class="quad-zone q-storm" id="zStorm"></div>
-          <div class="quad-zone q-rain" id="zRain"></div>
-          <div class="quad-zone q-moon" id="zMoon"></div>
-
-          <div class="axis-glow axis-h"></div>
-          <div class="axis-glow axis-v"></div>
-
-          <div class="quad-label ql-sun" id="qlSun"><span class="ql-icon">☀️</span>燃燒中</div>
-          <div class="quad-label ql-storm" id="qlStorm"><span class="ql-icon">⚡</span>一觸即發</div>
-          <div class="quad-label ql-rain" id="qlRain"><span class="ql-icon">🌧️</span>需要充電</div>
-          <div class="quad-label ql-moon" id="qlMoon"><span class="ql-icon">🌙</span>剛剛好</div>
-
-          <canvas class="compass-canvas" id="compassCanvas"></canvas>
+      <div class="q-container">
+        <div class="axis-label axis-y-top">快樂 😊 ↑</div>
+        <div class="axis-label axis-y-bottom">↓ 不快樂 😔</div>
+        <div class="axis-label axis-x-left">← 輕鬆</div>
+        <div class="axis-label axis-x-right">壓力大 →</div>
+        <div class="q-grid">
+          <div class="q-cell"><span class="emoji">😌</span>放鬆愜意</div>
+          <div class="q-cell"><span class="emoji">🔥</span>充實興奮</div>
+          <div class="q-cell"><span class="emoji">😶</span>無聊空虛</div>
+          <div class="q-cell"><span class="emoji">😰</span>焦慮壓迫</div>
         </div>
-
-        <div class="compass-dot" id="compassDot">
-          <div class="compass-dot-inner"></div>
-          <div class="compass-dot-ring"></div>
-        </div>
-
-        <div class="axis-end ae-top">能量高 ↑</div>
-        <div class="axis-end ae-bottom">↓ 能量低</div>
-        <div class="axis-end ae-left">負面</div>
-        <div class="axis-end ae-right">正面</div>
+        <canvas class="q-canvas" id="qCanvas"></canvas>
+        <div class="my-dot" id="myDot"></div>
       </div>
-
-      <div class="compass-readout">
+      <div class="q-readout">
+        <div class="q-zone-badge" id="zoneBadge"></div>
         <div class="val" id="readout"></div>
       </div>
-
-      <div class="compass-actions">
-        <button class="btn btn-secondary" onclick="resetDot()">重選</button>
-        <button class="btn btn-confirm disabled" id="btnConfirm" onclick="confirmMood()">就是這裡！</button>
-      </div>
-
-      <div class="history-section" id="historySection">
-        <div class="history-title">📈 最近 7 天軌跡</div>
-        <div class="history-track">
-          <canvas class="history-canvas" id="historyCanvas"></canvas>
-        </div>
+      <div class="q-actions">
+        <button class="btn btn-secondary" onclick="resetDot()">重新選</button>
+        <button class="btn btn-mint" id="btnConfirm" style="opacity:.3;pointer-events:none" onclick="confirmMood()">就是這裡</button>
       </div>
     </div>
+
+    <!-- Result -->
+    <div id="result" class="screen">
+      <div class="r-title">已記錄 ✨</div>
+      <div class="r-quadrant-wrap">
+        <div class="r-quadrant-bg"><div></div><div></div><div></div><div></div></div>
+        <canvas class="r-canvas" id="rCanvas"></canvas>
+        <div class="r-my-dot" id="rMyDot"></div>
+      </div>
+      <div class="stats" id="statsContainer">
+        <div class="stat-card" id="stat1">
+          <div class="stat-icon">👥</div>
+          <div class="stat-body">
+            <div class="stat-label">全服今日打卡</div>
+            <div class="stat-value"><span class="highlight" id="totalPlayers">47,832</span> 人</div>
+          </div>
+        </div>
+        <div class="stat-card" id="stat2">
+          <div class="stat-icon">🤝</div>
+          <div class="stat-body">
+            <div class="stat-label">你的象限</div>
+            <div class="stat-value"><span class="highlight" id="sameQuadrant">12,401</span> 人與你同行</div>
+          </div>
+        </div>
+        <div class="stat-card weather-card" id="stat3">
+          <div class="stat-icon" id="weatherIcon">☀️</div>
+          <div class="stat-body">
+            <div class="stat-label">今日全服情緒氣候</div>
+            <div class="stat-value" id="weatherText">晴天</div>
+          </div>
+        </div>
+      </div>
+      <div class="r-actions">
+        <button class="btn btn-secondary" onclick="goTo('trajectory')">我的軌跡</button>
+        <button class="btn btn-secondary" onclick="goTo('heatmap')">全服氣候</button>
+      </div>
+    </div>
+
+    <!-- Trajectory -->
+    <div id="trajectory" class="screen">
+      <div class="t-title">你的情緒軌跡</div>
+      <div class="t-sub">過去 7 天</div>
+      <div class="t-chart-wrap">
+        <div class="t-quadrant-bg"><div></div><div></div><div></div><div></div></div>
+        <canvas class="t-canvas" id="tCanvas"></canvas>
+      </div>
+      <div class="t-legend">
+        <div class="t-legend-item"><div class="t-legend-dot" style="background:var(--mint)"></div>你的位置</div>
+        <div class="t-legend-item"><div class="t-legend-dot" style="background:#a78bfa"></div>全服平均</div>
+      </div>
+      <div class="t-insight" id="tInsight"></div>
+      <div class="t-actions">
+        <button class="btn btn-secondary" onclick="goTo('result')">返回</button>
+        <button class="btn btn-secondary" onclick="goTo('heatmap')">全服氣候</button>
+      </div>
+    </div>
+
+    <!-- Heatmap -->
+    <div id="heatmap" class="screen">
+      <div class="h-badge">21:00 結算</div>
+      <div class="h-title">今日情緒氣候</div>
+      <div class="h-weather" id="hWeatherIcon">☀️</div>
+      <div class="h-weather-name" id="hWeatherName">晴天</div>
+      <div class="h-quadrant-wrap">
+        <div class="h-quadrant-bg"><div></div><div></div><div></div><div></div></div>
+        <canvas class="h-canvas" id="hCanvas"></canvas>
+      </div>
+      <div class="h-stats" id="hStats">
+        <div class="h-bar-row"><div class="h-bar-label">😌 放鬆</div><div class="h-bar"><div class="h-bar-fill" style="width:0;background:#4ade80" id="bar1"></div></div><div class="h-bar-pct" id="pct1">0%</div></div>
+        <div class="h-bar-row"><div class="h-bar-label">🔥 興奮</div><div class="h-bar"><div class="h-bar-fill" style="width:0;background:#fbbf24" id="bar2"></div></div><div class="h-bar-pct" id="pct2">0%</div></div>
+        <div class="h-bar-row"><div class="h-bar-label">😶 無聊</div><div class="h-bar"><div class="h-bar-fill" style="width:0;background:#60a5fa" id="bar3"></div></div><div class="h-bar-pct" id="pct3">0%</div></div>
+        <div class="h-bar-row"><div class="h-bar-label">😰 焦慮</div><div class="h-bar"><div class="h-bar-fill" style="width:0;background:#f87171" id="bar4"></div></div><div class="h-bar-pct" id="pct4">0%</div></div>
+      </div>
+      <div style="text-align:center;font-size:13px;color:var(--text-dim);margin-bottom:14px" id="hTotal"></div>
+      <div class="t-actions">
+        <button class="btn btn-secondary" onclick="goTo('result')">返回</button>
+        <button class="btn btn-mint" onclick="restart()">再打一次卡</button>
+      </div>
+    </div>
+
   </div>
 
   <!-- ========== Bottom Nav ========== -->
@@ -312,444 +321,380 @@
   </div>
 </div>
 
-<!-- Card Overlay -->
-<div class="card-overlay" id="cardOverlay">
-  <div class="card-flip">
-    <div class="card-flip-inner" id="cardFlipInner">
-      <div class="card-back">
-        <div class="card-back-design">🧭</div>
-      </div>
-      <div class="card-front" id="cardFront">
-        <div class="card-rarity" id="cardRarity"></div>
-        <div class="card-front-bg" id="cardBg"></div>
-        <div class="card-content">
-          <div class="card-icon" id="cardIcon"></div>
-          <div class="card-quad-name" id="cardQuadName"></div>
-          <div class="card-phrase" id="cardPhrase"></div>
-          <div class="card-suggest" id="cardSuggest"></div>
-          <div class="card-streak">
-            <div class="card-streak-label" id="streakLabel">連續記錄 3 天</div>
-            <div class="streak-dots" id="streakDots"></div>
-          </div>
-        </div>
-        <div class="card-bottom">
-          <button class="btn-collect" id="btnCollect" onclick="collectCard()">收下了</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script>
 // ==================== State ====================
-let myX = -1, myY = -1;
-let placed = false;
-let isDragging = false;
-let eventsReady = false;
-const STREAK_DAYS = 3;
+var myX = -1, myY = -1;
+var placed = false;
+var isDragging = false;
+var canvasEventsReady = false;
 
-const fakeHistory = [
-  {v:.65,e:.72},{v:.55,e:.60},{v:.35,e:.70},{v:.40,e:.45},{v:.60,e:.65},{v:.70,e:.80}
+var fakeHistory = [
+  {s:.35,h:.72},{s:.55,h:.60},{s:.70,h:.40},{s:.60,h:.45},{s:.40,h:.65},{s:.30,h:.80}
 ];
+var serverAvg = [
+  {s:.48,h:.55},{s:.52,h:.50},{s:.58,h:.45},{s:.55,h:.48},{s:.50,h:.52},{s:.45,h:.58},{s:.47,h:.54}
+];
+var dayLabels = ['一','二','三','四','五','六','日'];
 
-// ==================== Init ====================
-window.addEventListener('load', () => {
-  buildTicks();
-  initCompass();
-  drawHistoryTrack();
-});
-
-function buildTicks() {
-  const container = document.getElementById('compassTicks');
-  for (let i = 0; i < 72; i++) {
-    const tick = document.createElement('div');
-    tick.className = 'compass-tick';
-    tick.style.transform = 'rotate(' + (i * 5) + 'deg)';
-    if (i % 9 === 0) {
-      tick.style.height = '12px';
-      tick.style.background = 'rgba(255,255,255,.25)';
-    }
-    container.appendChild(tick);
-  }
+// ==================== Navigation ====================
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  if (id === 'quadrant') initQuadrantCanvas();
+  if (id === 'result') showResult();
+  if (id === 'trajectory') showTrajectory();
+  if (id === 'heatmap') showHeatmap();
 }
 
-// ==================== Compass Interaction ====================
-function initCompass() {
-  const canvas = document.getElementById('compassCanvas');
-  const disc = document.getElementById('compassDisc');
-  const rect = disc.getBoundingClientRect();
+function restart() {
+  placed = false;
+  myX = -1; myY = -1;
+  var dot = document.getElementById('myDot');
+  dot.classList.remove('placed');
+  document.getElementById('readout').classList.remove('show');
+  document.getElementById('zoneBadge').classList.remove('show');
+  document.getElementById('btnConfirm').style.opacity = '.3';
+  document.getElementById('btnConfirm').style.pointerEvents = 'none';
+  goTo('quadrant');
+}
+
+// ==================== Quadrant Canvas ====================
+function initQuadrantCanvas() {
+  var canvas = document.getElementById('qCanvas');
+  var rect = canvas.parentElement.getBoundingClientRect();
   canvas.width = rect.width * devicePixelRatio;
   canvas.height = rect.height * devicePixelRatio;
   canvas.style.width = rect.width + 'px';
   canvas.style.height = rect.height + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  drawCrosshair(ctx, rect.width, rect.height);
 
-  if (eventsReady) return;
-  eventsReady = true;
-
-  function updateDot(clientX, clientY) {
-    const r = canvas.getBoundingClientRect();
-    const cx = r.width / 2, cy = r.height / 2;
-    let px = clientX - r.left - cx;
-    let py = clientY - r.top - cy;
-    const dist = Math.sqrt(px * px + py * py);
-    const maxR = r.width / 2 - 4;
-    if (dist > maxR) { px = px / dist * maxR; py = py / dist * maxR; }
-
-    myX = Math.max(0, Math.min(1, (px / maxR + 1) / 2));
-    myY = Math.max(0, Math.min(1, (-py / maxR + 1) / 2));
+  function updateDotPosition(clientX, clientY) {
+    var r = canvas.getBoundingClientRect();
+    var px = (clientX - r.left) / r.width;
+    var py = (clientY - r.top) / r.height;
+    myX = Math.max(0, Math.min(1, px));
+    myY = Math.max(0, Math.min(1, 1 - py));
     placed = true;
-
-    const wrap = document.getElementById('compassWrap');
-    const wrapR = wrap.getBoundingClientRect();
-    const dotEl = document.getElementById('compassDot');
-    const dotLeft = (clientX - r.left) + (r.left - wrapR.left);
-    const dotTop = (clientY - r.top) + (r.top - wrapR.top);
-    dotEl.style.left = dotLeft + 'px';
-    dotEl.style.top = dotTop + 'px';
-    dotEl.classList.add('placed');
-
-    spawnTrail(dotLeft, dotTop);
-
-    const readout = document.getElementById('readout');
-    readout.textContent = getQuadrantEmoji(myX, myY) + ' ' + getQuadrantName(myX, myY);
+    var dot = document.getElementById('myDot');
+    dot.style.left = (myX * 100) + '%';
+    dot.style.top = ((1 - myY) * 100) + '%';
+    dot.classList.add('placed');
+    var happiness = Math.round(myY * 100);
+    var stress = Math.round(myX * 100);
+    var readout = document.getElementById('readout');
+    readout.textContent = '快樂 ' + happiness + '　壓力 ' + stress;
     readout.classList.add('show');
 
-    document.getElementById('btnConfirm').classList.remove('disabled');
-    updateQuadrantHighlight(myX, myY);
+    var qName = getQuadrantName(myX, myY);
+    var qEmoji = getQuadrantEmoji(myX, myY);
+    var badge = document.getElementById('zoneBadge');
+    badge.textContent = qEmoji + ' ' + qName;
+    badge.classList.add('show');
+
+    document.getElementById('btnConfirm').style.opacity = '1';
+    document.getElementById('btnConfirm').style.pointerEvents = 'auto';
   }
 
-  canvas.addEventListener('mousedown', function(e) {
-    isDragging = true;
-    document.getElementById('compassDot').classList.add('dragging');
-    updateDot(e.clientX, e.clientY);
-  });
-  window.addEventListener('mousemove', function(e) {
-    if (isDragging) updateDot(e.clientX, e.clientY);
-  });
-  window.addEventListener('mouseup', function() {
-    isDragging = false;
-    document.getElementById('compassDot').classList.remove('dragging');
-  });
-  canvas.addEventListener('touchstart', function(e) {
-    e.preventDefault();
-    isDragging = true;
-    document.getElementById('compassDot').classList.add('dragging');
-    updateDot(e.touches[0].clientX, e.touches[0].clientY);
-  }, {passive: false});
-  canvas.addEventListener('touchmove', function(e) {
-    e.preventDefault();
-    if (isDragging) updateDot(e.touches[0].clientX, e.touches[0].clientY);
-  }, {passive: false});
-  canvas.addEventListener('touchend', function() {
-    isDragging = false;
-    document.getElementById('compassDot').classList.remove('dragging');
-  });
-}
-
-function spawnTrail(x, y) {
-  var wrap = document.getElementById('compassWrap');
-  var el = document.createElement('div');
-  el.className = 'trail-particle';
-  el.style.left = x + 'px';
-  el.style.top = y + 'px';
-  var s = 3 + Math.random() * 5;
-  el.style.width = s + 'px';
-  el.style.height = s + 'px';
-  el.style.opacity = '0.6';
-  wrap.appendChild(el);
-  requestAnimationFrame(function() {
-    el.style.transition = 'opacity .5s ease, transform .5s ease';
-    el.style.opacity = '0';
-    el.style.transform = 'translate(' + ((Math.random()-.5)*20) + 'px,' + ((Math.random()-.5)*20) + 'px) scale(0)';
-  });
-  setTimeout(function() { el.remove(); }, 600);
-}
-
-function updateQuadrantHighlight(x, y) {
-  var zones = ['zSun','zStorm','zRain','zMoon'];
-  var labels = ['qlSun','qlStorm','qlRain','qlMoon'];
-  var activeIdx = 0;
-  if (x >= .5 && y >= .5) activeIdx = 0;
-  else if (x < .5 && y >= .5) activeIdx = 1;
-  else if (x < .5 && y < .5) activeIdx = 2;
-  else activeIdx = 3;
-
-  for (var i = 0; i < zones.length; i++) {
-    var el = document.getElementById(zones[i]);
-    if (i === activeIdx) { el.classList.remove('dimmed'); el.classList.add('highlight'); }
-    else { el.classList.add('dimmed'); el.classList.remove('highlight'); }
-  }
-  for (var j = 0; j < labels.length; j++) {
-    var lbl = document.getElementById(labels[j]);
-    if (j === activeIdx) lbl.classList.add('active-label');
-    else lbl.classList.remove('active-label');
+  if (!canvasEventsReady) {
+    canvasEventsReady = true;
+    canvas.addEventListener('mousedown', function(e) {
+      isDragging = true;
+      updateDotPosition(e.clientX, e.clientY);
+    });
+    window.addEventListener('mousemove', function(e) {
+      if (isDragging) updateDotPosition(e.clientX, e.clientY);
+    });
+    window.addEventListener('mouseup', function() { isDragging = false; });
+    canvas.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      isDragging = true;
+      updateDotPosition(e.touches[0].clientX, e.touches[0].clientY);
+    }, {passive: false});
+    canvas.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+      if (isDragging) updateDotPosition(e.touches[0].clientX, e.touches[0].clientY);
+    }, {passive: false});
+    canvas.addEventListener('touchend', function() { isDragging = false; });
   }
 }
 
-function getQuadrantName(x, y) {
-  if (x >= .5 && y >= .5) return '燃燒中';
-  if (x < .5 && y >= .5) return '一觸即發';
-  if (x < .5 && y < .5) return '需要充電';
-  return '剛剛好';
-}
-
-function getQuadrantEmoji(x, y) {
-  if (x >= .5 && y >= .5) return '☀️';
-  if (x < .5 && y >= .5) return '⚡';
-  if (x < .5 && y < .5) return '🌧️';
-  return '🌙';
-}
-
-function getQuadrantColor(x, y) {
-  if (x >= .5 && y >= .5) return {solid:'#ffcb3c',grad:'linear-gradient(135deg,#2a2215,#1a1932)'};
-  if (x < .5 && y >= .5) return {solid:'#64a0ff',grad:'linear-gradient(135deg,#151e2e,#1a1932)'};
-  if (x < .5 && y < .5) return {solid:'#7858c8',grad:'linear-gradient(135deg,#1a1530,#1a1932)'};
-  return {solid:'#50d2b4',grad:'linear-gradient(135deg,#152522,#1a1932)'};
-}
-
-function getCardPhrases(x, y) {
-  if (x >= .5 && y >= .5) {
-    var a = [
-      {text:'能量滿滿，今天像充飽電的太陽！', suggest:'打一場冒險消耗能量'},
-      {text:'正在巔峰狀態，什麼都能搞定的感覺。', suggest:'挑戰高難度副本'},
-      {text:'心情超好，世界閃閃發亮。', suggest:'去公會帶新人冒險'}
-    ];
-    return a[Math.floor(Math.random()*a.length)];
-  }
-  if (x < .5 && y >= .5) {
-    var b = [
-      {text:'能量很高但有點煩躁，需要釋放一下。', suggest:'去競技場打一輪'},
-      {text:'腦子轉得很快，但方向有點亂。', suggest:'做個限時挑戰集中精神'},
-      {text:'像暴風雨前的天空，蓄勢待發。', suggest:'整理一下背包和裝備'}
-    ];
-    return b[Math.floor(Math.random()*b.length)];
-  }
-  if (x < .5 && y < .5) {
-    var c = [
-      {text:'電量有點低，需要找個地方充電。', suggest:'去篝火旁坐坐吧'},
-      {text:'今天有點累，不想動太多腦子。', suggest:'掛機刷個簡單副本'},
-      {text:'需要被溫柔對待的一天。', suggest:'去寵物小屋摸摸毛孩'}
-    ];
-    return c[Math.floor(Math.random()*c.length)];
-  }
-  var d = [
-    {text:'安安靜靜，剛剛好的平靜。', suggest:'散步去看看風景'},
-    {text:'像月光一樣溫柔，一切都好。', suggest:'寫封信給公會夥伴'},
-    {text:'不急不躁，享受現在這個節奏。', suggest:'去釣魚放鬆一下'}
-  ];
-  return d[Math.floor(Math.random()*d.length)];
+function drawCrosshair(ctx, w, h) {
+  ctx.strokeStyle = 'rgba(255,255,255,.08)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(w / 2, 0); ctx.lineTo(w / 2, h); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.stroke();
+  ctx.setLineDash([]);
 }
 
 function resetDot() {
   placed = false;
-  var dot = document.getElementById('compassDot');
-  dot.classList.remove('placed','dragging');
+  document.getElementById('myDot').classList.remove('placed');
   document.getElementById('readout').classList.remove('show');
-  document.getElementById('btnConfirm').classList.add('disabled');
-  var zones = ['zSun','zStorm','zRain','zMoon'];
-  var labels = ['qlSun','qlStorm','qlRain','qlMoon'];
-  for (var i = 0; i < zones.length; i++) {
-    var el = document.getElementById(zones[i]);
-    el.classList.remove('dimmed','highlight');
-  }
-  for (var j = 0; j < labels.length; j++) {
-    document.getElementById(labels[j]).classList.remove('active-label');
-  }
+  document.getElementById('zoneBadge').classList.remove('show');
+  document.getElementById('btnConfirm').style.opacity = '.3';
+  document.getElementById('btnConfirm').style.pointerEvents = 'none';
 }
 
-// ==================== Confirm ====================
 function confirmMood() {
   if (!placed) return;
-  spawnShockwave();
-  var pulse = document.createElement('div');
-  pulse.className = 'pulse-overlay';
-  document.body.appendChild(pulse);
-  setTimeout(function() { pulse.remove(); }, 600);
-  setTimeout(function() { showCard(); }, 500);
+  goTo('result');
 }
 
-function spawnShockwave() {
-  var wrap = document.getElementById('compassWrap');
-  var r = wrap.getBoundingClientRect();
-  var sw = document.createElement('div');
-  sw.className = 'shockwave';
-  sw.style.left = (r.left + r.width/2) + 'px';
-  sw.style.top = (r.top + r.height/2) + 'px';
-  document.body.appendChild(sw);
-  setTimeout(function() { sw.remove(); }, 800);
+function getQuadrantName(x, y) {
+  if (x < .5 && y >= .5) return '放鬆愜意';
+  if (x >= .5 && y >= .5) return '充實興奮';
+  if (x < .5 && y < .5) return '無聊空虛';
+  return '焦慮壓迫';
 }
 
-// ==================== Card ====================
-function showCard() {
-  var overlay = document.getElementById('cardOverlay');
-  var color = getQuadrantColor(myX, myY);
-  var emoji = getQuadrantEmoji(myX, myY);
-  var name = getQuadrantName(myX, myY);
-  var phrases = getCardPhrases(myX, myY);
-
-  document.getElementById('cardIcon').textContent = emoji;
-  document.getElementById('cardQuadName').textContent = emoji + ' ' + name;
-  document.getElementById('cardPhrase').textContent = phrases.text;
-  document.getElementById('cardSuggest').innerHTML = '<b>推薦：</b>' + phrases.suggest;
-  document.getElementById('cardBg').style.background = color.grad;
-  document.getElementById('cardRarity').style.background = 'linear-gradient(90deg,transparent,' + color.solid + ',transparent)';
-
-  var dotsContainer = document.getElementById('streakDots');
-  dotsContainer.innerHTML = '';
-  for (var i = 0; i < 7; i++) {
-    var dot = document.createElement('div');
-    dot.className = 'streak-dot';
-    if (i < STREAK_DAYS) dot.classList.add('filled');
-    if (i === STREAK_DAYS) { dot.classList.add('today'); dot.classList.add('filled'); }
-    dotsContainer.appendChild(dot);
-  }
-  document.getElementById('streakLabel').textContent = '連續記錄 ' + (STREAK_DAYS + 1) + ' 天';
-
-  var flipInner = document.getElementById('cardFlipInner');
-  flipInner.style.transition = 'none';
-  flipInner.style.transform = 'rotateY(180deg)';
-
-  overlay.classList.add('active');
-
-  requestAnimationFrame(function() {
-    requestAnimationFrame(function() {
-      flipInner.style.transition = 'transform .8s cubic-bezier(.4,.0,.2,1)';
-      flipInner.style.transform = 'rotateY(0deg)';
-    });
-  });
-
-  setTimeout(function() { spawnCardSparkles(); }, 600);
+function getQuadrantEmoji(x, y) {
+  if (x < .5 && y >= .5) return '😌';
+  if (x >= .5 && y >= .5) return '🔥';
+  if (x < .5 && y < .5) return '😶';
+  return '😰';
 }
 
-function spawnCardSparkles() {
-  var card = document.querySelector('.card-flip');
-  var r = card.getBoundingClientRect();
-  var cx = r.left + r.width/2, cy = r.top + r.height/2;
-  var colors = ['#ffcb3c','#7f5af0','#50d2b4','#64a0ff','#fff'];
-  for (var i = 0; i < 12; i++) {
-    var p = document.createElement('div');
-    p.className = 'particle';
-    var angle = (Math.PI*2 / 12) * i + Math.random()*.3;
-    var dist = 80 + Math.random()*60;
-    var size = 4 + Math.random()*4;
-    p.style.left = cx + 'px';
-    p.style.top = cy + 'px';
-    p.style.width = size + 'px';
-    p.style.height = size + 'px';
-    p.style.background = colors[Math.floor(Math.random()*colors.length)];
-    p.style.setProperty('--tx', (Math.cos(angle)*dist) + 'px');
-    p.style.setProperty('--ty', (Math.sin(angle)*dist) + 'px');
-    document.body.appendChild(p);
-    setTimeout((function(el) { return function() { el.remove(); }; })(p), 1100);
-  }
-}
-
-function collectCard() {
-  var btn = document.getElementById('btnCollect');
-  var r = btn.getBoundingClientRect();
-  var cx = r.left + r.width/2, cy = r.top + r.height/2;
-  var stars = ['✨','⭐','💫'];
-  for (var i = 0; i < 8; i++) {
-    var s = document.createElement('div');
-    s.className = 'star-particle';
-    s.textContent = stars[Math.floor(Math.random()*stars.length)];
-    var tx = (Math.random()-.5) * 200;
-    var ty = -100 - Math.random()*150;
-    s.style.left = cx + 'px';
-    s.style.top = cy + 'px';
-    s.style.setProperty('--tx', tx + 'px');
-    s.style.setProperty('--ty', ty + 'px');
-    s.style.animationDelay = (i*50) + 'ms';
-    document.body.appendChild(s);
-    setTimeout((function(el) { return function() { el.remove(); }; })(s), 1200);
-  }
-  setTimeout(function() {
-    document.getElementById('cardOverlay').classList.remove('active');
-    drawHistoryTrack();
-  }, 400);
-}
-
-// ==================== History ====================
-function drawHistoryTrack() {
-  var canvas = document.getElementById('historyCanvas');
-  var parentRect = canvas.parentElement.getBoundingClientRect();
-  canvas.width = parentRect.width * devicePixelRatio;
-  canvas.height = parentRect.height * devicePixelRatio;
-  canvas.style.width = parentRect.width + 'px';
-  canvas.style.height = parentRect.height + 'px';
+// ==================== Result Screen ====================
+function showResult() {
+  var wrap = document.querySelector('.r-quadrant-wrap');
+  var rect = wrap.getBoundingClientRect();
+  var canvas = document.getElementById('rCanvas');
+  canvas.width = rect.width * devicePixelRatio;
+  canvas.height = rect.height * devicePixelRatio;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
   var ctx = canvas.getContext('2d');
   ctx.scale(devicePixelRatio, devicePixelRatio);
-  var w = parentRect.width, h = parentRect.height;
 
-  var history = fakeHistory.slice();
-  if (placed) history.push({v: myX, e: myY});
+  var dot = document.getElementById('rMyDot');
+  dot.style.left = (myX * 100) + '%';
+  dot.style.top = ((1 - myY) * 100) + '%';
 
-  var padding = 20;
-  var usableW = w - padding * 2;
-  var usableH = h - 14;
+  var dots = generateCommunityDots(400);
+  animateDots(ctx, dots, rect.width, rect.height);
 
-  if (history.length >= 2) {
-    ctx.beginPath();
-    ctx.strokeStyle = 'rgba(178,223,219,.3)';
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([4,3]);
-    for (var i = 0; i < history.length; i++) {
-      var px = padding + (i / (history.length - 1 || 1)) * usableW;
-      var py = 5 + (1 - history[i].e) * usableH;
-      if (i === 0) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
-    }
-    ctx.stroke();
-    ctx.setLineDash([]);
+  var qPop = getQuadrantPop(myX, myY);
+
+  var cards = document.querySelectorAll('.stat-card');
+  cards.forEach(function(c) { c.classList.remove('show'); });
+
+  document.getElementById('sameQuadrant').textContent = qPop.toLocaleString();
+
+  var weather = getWeather();
+  document.getElementById('weatherIcon').textContent = weather.icon;
+  document.getElementById('weatherText').textContent = weather.name;
+
+  setTimeout(function() { cards[0].classList.add('show'); }, 600);
+  setTimeout(function() { cards[1].classList.add('show'); }, 900);
+  setTimeout(function() { cards[2].classList.add('show'); }, 1200);
+}
+
+function generateCommunityDots(count) {
+  var dots = [];
+  var clusters = [
+    {cx:.25,cy:.75,r:.2,weight:.35,color:'rgba(74,222,128,'},
+    {cx:.65,cy:.65,r:.18,weight:.2,color:'rgba(251,191,36,'},
+    {cx:.3,cy:.35,r:.15,weight:.15,color:'rgba(96,165,250,'},
+    {cx:.7,cy:.25,r:.2,weight:.3,color:'rgba(248,113,113,'}
+  ];
+  for (var i = 0; i < count; i++) {
+    var r = Math.random(), acc = 0, cluster = clusters[0];
+    for (var c = 0; c < clusters.length; c++) { acc += clusters[c].weight; if (r < acc) { cluster = clusters[c]; break; } }
+    var angle = Math.random() * Math.PI * 2;
+    var dist = Math.random() * cluster.r;
+    var x = Math.max(.02, Math.min(.98, cluster.cx + Math.cos(angle) * dist));
+    var y = Math.max(.02, Math.min(.98, cluster.cy + Math.sin(angle) * dist));
+    var alpha = .15 + Math.random() * .25;
+    dots.push({x: x, y: 1 - y, alpha: alpha, color: cluster.color + alpha + ')', delay: Math.random()});
   }
+  return dots;
+}
 
-  var dayNames = ['一','二','三','四','五','六','日'];
-  for (var i = 0; i < history.length; i++) {
-    var px = padding + (i / (history.length - 1 || 1)) * usableW;
-    var py = 5 + (1 - history[i].e) * usableH;
-    var isToday = placed && (i === history.length - 1);
-    var dotColor = getDotColor(history[i].v, history[i].e);
+function animateDots(ctx, dots, w, h) {
+  var sorted = dots.sort(function(a, b) { return a.delay - b.delay; });
+  var duration = 1500;
+  var start = performance.now();
 
-    ctx.beginPath();
-    ctx.arc(px, py, isToday ? 5 : 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = dotColor;
-    ctx.fill();
+  function frame(now) {
+    var elapsed = now - start;
+    var progress = Math.min(1, elapsed / duration);
+    ctx.clearRect(0, 0, w, h);
+    drawCrosshair(ctx, w, h);
 
-    if (isToday) {
+    var visible = Math.floor(progress * sorted.length);
+    for (var i = 0; i < visible; i++) {
+      var d = sorted[i];
       ctx.beginPath();
-      ctx.arc(px, py, 8, 0, Math.PI * 2);
-      ctx.strokeStyle = dotColor;
-      ctx.globalAlpha = .3;
+      ctx.arc(d.x * w, d.y * h, 3, 0, Math.PI * 2);
+      ctx.fillStyle = d.color;
+      ctx.fill();
+    }
+    if (progress < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+function getQuadrantPop(x, y) {
+  var pops = {'放鬆愜意': 16742, '充實興奮': 9583, '無聊空虛': 7106, '焦慮壓迫': 14401};
+  return pops[getQuadrantName(x, y)];
+}
+
+function getWeather() {
+  var weathers = [
+    {icon: '☀️', name: '晴天'},
+    {icon: '⛅', name: '多雲'},
+    {icon: '🌧️', name: '雷雨'},
+    {icon: '🌤️', name: '晴時多雲'}
+  ];
+  return weathers[Math.floor(Math.random() * weathers.length)];
+}
+
+// ==================== Trajectory Screen ====================
+function showTrajectory() {
+  var wrap = document.querySelector('.t-chart-wrap');
+  var rect = wrap.getBoundingClientRect();
+  var canvas = document.getElementById('tCanvas');
+  canvas.width = rect.width * devicePixelRatio;
+  canvas.height = rect.height * devicePixelRatio;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  var w = rect.width, h = rect.height;
+
+  drawCrosshair(ctx, w, h);
+
+  var myPath = fakeHistory.slice();
+  myPath.push({s: myX, h: myY});
+
+  var duration = 1200;
+  var start = performance.now();
+
+  function frame(now) {
+    var elapsed = now - start;
+    var progress = Math.min(1, elapsed / duration);
+    ctx.clearRect(0, 0, w, h);
+    drawCrosshair(ctx, w, h);
+
+    var visCount = Math.floor(progress * myPath.length) + 1;
+
+    var svgProgress = Math.min(1, progress * 1.2);
+    var svgCount = Math.floor(svgProgress * serverAvg.length);
+    if (svgCount >= 2) {
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(167,139,250,.5)';
       ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      for (var i = 0; i < svgCount; i++) {
+        var px = serverAvg[i].s * w;
+        var py = (1 - serverAvg[i].h) * h;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
       ctx.stroke();
-      ctx.globalAlpha = 1;
+      ctx.setLineDash([]);
+      for (var i = 0; i < svgCount; i++) {
+        ctx.beginPath();
+        ctx.arc(serverAvg[i].s * w, (1 - serverAvg[i].h) * h, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#a78bfa';
+        ctx.fill();
+      }
     }
 
-    ctx.font = (isToday ? 'bold ' : '') + '9px "Noto Sans TC",sans-serif';
-    ctx.fillStyle = isToday ? '#fff' : 'rgba(255,255,255,.4)';
-    ctx.textAlign = 'center';
-    ctx.fillText(isToday ? '今天' : '週' + dayNames[i], px, py + (isToday ? 16 : 14));
+    if (visCount >= 2) {
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(178,223,219,.7)';
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([]);
+      for (var i = 0; i < Math.min(visCount, myPath.length); i++) {
+        var px = myPath[i].s * w;
+        var py = (1 - myPath[i].h) * h;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+
+    for (var i = 0; i < Math.min(visCount, myPath.length); i++) {
+      var px = myPath[i].s * w;
+      var py = (1 - myPath[i].h) * h;
+      var isToday = (i === myPath.length - 1);
+      ctx.beginPath();
+      ctx.arc(px, py, isToday ? 8 : 5, 0, Math.PI * 2);
+      ctx.fillStyle = isToday ? '#B2DFDB' : 'rgba(178,223,219,.6)';
+      ctx.fill();
+      if (isToday) {
+        ctx.beginPath();
+        ctx.arc(px, py, 12, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(178,223,219,.3)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      ctx.font = (isToday ? 'bold ' : '') + '11px "Noto Sans TC",sans-serif';
+      ctx.fillStyle = isToday ? '#fff' : 'rgba(255,255,255,.5)';
+      ctx.textAlign = 'center';
+      ctx.fillText(isToday ? '今天' : '週' + dayLabels[i], px, py - (isToday ? 16 : 12));
+    }
+
+    if (progress < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  var insight = document.getElementById('tInsight');
+  var happyToday = Math.round(myY * 100);
+  var avgHappy = Math.round(fakeHistory.reduce(function(s, d) { return s + d.h; }, 0) / fakeHistory.length * 100);
+  var diff = happyToday - avgHappy;
+  if (diff > 10) {
+    insight.innerHTML = '今天的你比過去一週<b>開心了 ' + diff + ' 點</b> 🎉<br>繼續保持！';
+  } else if (diff < -10) {
+    insight.innerHTML = '今天有點辛苦，比平常<b>低了 ' + Math.abs(diff) + ' 點</b>。<br>沒關係，明天會更好。';
+  } else {
+    insight.innerHTML = '這週的你，狀態<b>蠻穩定</b>的 😊<br>保持節奏就好。';
   }
 }
 
-function getDotColor(v, e) {
-  if (v >= .5 && e >= .5) return '#ffcb3c';
-  if (v < .5 && e >= .5) return '#64a0ff';
-  if (v < .5 && e < .5) return '#7858c8';
-  return '#50d2b4';
+// ==================== Heatmap Screen ====================
+function showHeatmap() {
+  var wrap = document.querySelector('.h-quadrant-wrap');
+  var rect = wrap.getBoundingClientRect();
+  var canvas = document.getElementById('hCanvas');
+  canvas.width = rect.width * devicePixelRatio;
+  canvas.height = rect.height * devicePixelRatio;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+
+  var dots = generateCommunityDots(800);
+  animateDots(ctx, dots, rect.width, rect.height);
+
+  var weather = getWeather();
+  document.getElementById('hWeatherIcon').textContent = weather.icon;
+  document.getElementById('hWeatherName').textContent = weather.name;
+  document.getElementById('hTotal').textContent = '全服 47,832 人參與今日打卡';
+
+  var pcts = [35, 20, 15, 30];
+  setTimeout(function() {
+    for (var i = 0; i < 4; i++) {
+      document.getElementById('bar' + (i + 1)).style.width = pcts[i] + '%';
+      document.getElementById('pct' + (i + 1)).textContent = pcts[i] + '%';
+    }
+  }, 300);
 }
 
-window.addEventListener('resize', function() {
-  var canvas = document.getElementById('compassCanvas');
-  var disc = document.getElementById('compassDisc');
-  if (disc) {
-    var rect = disc.getBoundingClientRect();
-    canvas.width = rect.width * devicePixelRatio;
-    canvas.height = rect.height * devicePixelRatio;
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = rect.height + 'px';
-  }
-  drawHistoryTrack();
+// ==================== Init ====================
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    var c = document.getElementById('qCanvas');
+    if (c && c.parentElement) {
+      var r = c.parentElement.getBoundingClientRect();
+      c.width = r.width * devicePixelRatio;
+      c.height = r.height * devicePixelRatio;
+      c.style.width = r.width + 'px';
+      c.style.height = r.height + 'px';
+    }
+  }, 100);
 });
 </script>
 </body>
