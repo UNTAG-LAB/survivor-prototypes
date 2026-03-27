@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>情緒瓶系統 Demo</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: #1a1a2e;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  #app {
+    width: 390px; height: 844px;
+    position: relative;
+    overflow: hidden;
+    background: #1a1a2e;
+    border-radius: 20px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+  }
+  @media (max-width: 420px) {
+    #app { width: 100vw; height: 100vh; border-radius: 0; }
+  }
+
+  /* Sky */
+  .sky {
+    position: absolute; top: 0; left: 0; right: 0; height: 55%;
+    background: linear-gradient(180deg, #4a4a6a 0%, #6a6a8a 40%, #8a8a9a 100%);
+    transition: background 1.5s ease;
+  }
+  .sky.sunny {
+    background: linear-gradient(180deg, #87CEEB 0%, #FFD89B 50%, #FFECD2 100%);
+  }
+  .sky.rainy {
+    background: linear-gradient(180deg, #2c3e50 0%, #4a6572 50%, #607D8B 100%);
+  }
+  .sky.thunder {
+    background: linear-gradient(180deg, #1a0a2e 0%, #4a1a6e 50%, #6a3a8e 100%);
+  }
+
+  /* Stars */
+  .stars {
+    position: absolute; top: 0; left: 0; right: 0; height: 55%;
+    opacity: 0.3;
+    transition: opacity 1.5s;
+  }
+  .sky.sunny ~ .stars, .sky.rainy ~ .stars, .sky.thunder ~ .stars { opacity: 0; }
+  .star {
+    position: absolute;
+    width: 3px; height: 3px;
+    background: #fff;
+    border-radius: 50%;
+    animation: twinkle 2s infinite alternate;
+  }
+  @keyframes twinkle { from { opacity: 0.3; } to { opacity: 1; } }
+
+  /* Rain */
+  .rain-container {
+    position: absolute; top: 0; left: 0; right: 0; height: 55%;
+    pointer-events: none; opacity: 0; transition: opacity 1s;
+  }
+  .rain-container.active { opacity: 1; }
+  .raindrop {
+    position: absolute; top: -20px;
+    width: 2px; background: linear-gradient(transparent, rgba(74,165,181,0.6));
+    animation: fall linear infinite;
+  }
+  @keyframes fall { to { transform: translateY(500px); } }
+
+  /* Lightning */
+  .lightning {
+    position: absolute; top: 0; left: 0; right: 0; height: 55%;
+    background: rgba(255,255,255,0); pointer-events: none;
+    transition: background 0.05s;
+  }
+  .lightning.flash { background: rgba(255,255,255,0.3); }
+
+  /* Ground / Campfire */
+  .ground {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 50%;
+    background: linear-gradient(180deg, #2d1f0e 0%, #1a1208 100%);
+  }
+  .campfire {
+    position: absolute; bottom: 18%; left: 50%; transform: translateX(-50%);
+    width: 80px; height: 100px;
+  }
+  .fire-base {
+    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 60px; height: 8px; background: #5c3d2e; border-radius: 50%;
+  }
+  .flame {
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    width: 30px; height: 50px;
+    background: radial-gradient(ellipse at bottom, #ff6600 0%, #ff9900 40%, #ffcc00 70%, transparent 100%);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    animation: flicker 0.5s infinite alternate;
+  }
+  .flame::before {
+    content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 20px; height: 35px;
+    background: radial-gradient(ellipse at bottom, #ffcc00 0%, #ff9900 50%, transparent 100%);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    animation: flicker 0.3s infinite alternate-reverse;
+  }
+  @keyframes flicker {
+    0% { transform: translateX(-50%) scaleX(1) scaleY(1); }
+    100% { transform: translateX(-50%) scaleX(0.9) scaleY(1.05); }
+  }
+  .fire-glow {
+    position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
+    width: 150px; height: 80px;
+    background: radial-gradient(ellipse, rgba(255,120,0,0.15) 0%, transparent 70%);
+  }
+
+  /* Bottle */
+  .bottle-area {
+    position: absolute; bottom: 8%; right: 15%;
+    width: 50px; height: 80px;
+  }
+  .bottle-body {
+    position: absolute; bottom: 0;
+    width: 40px; height: 60px;
+    border: 2px solid rgba(255,255,255,0.25);
+    border-radius: 0 0 8px 8px;
+    background: rgba(255,255,255,0.05);
+    overflow: hidden;
+  }
+  .bottle-neck {
+    position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+    width: 20px; height: 15px;
+    border: 2px solid rgba(255,255,255,0.25);
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    background: rgba(255,255,255,0.05);
+  }
+  .bottle-ball {
+    position: absolute; bottom: 4px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    transition: all 0.5s;
+  }
+
+  /* UI Layers */
+  .screen {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.8s ease;
+    z-index: 10;
+  }
+  .screen.active { opacity: 1; pointer-events: auto; }
+
+  /* Text */
+  .guide-text {
+    color: rgba(255,255,255,0.85);
+    font-size: 22px;
+    font-weight: 300;
+    letter-spacing: 4px;
+    text-shadow: 0 0 20px rgba(0,0,0,0.5);
+    animation: fadeInSlow 1.5s ease;
+    margin-bottom: 40px;
+  }
+  @keyframes fadeInSlow { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .float-text {
+    position: absolute;
+    color: rgba(255,255,255,0.7);
+    font-size: 16px;
+    font-weight: 300;
+    letter-spacing: 2px;
+    pointer-events: none;
+    animation: floatUp 3s ease forwards;
+    z-index: 20;
+  }
+  @keyframes floatUp {
+    0% { opacity: 0; transform: translateY(20px); }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-30px); }
+  }
+
+  /* Weather Cards */
+  .weather-cards {
+    display: flex; gap: 16px;
+    padding: 0 20px;
+  }
+  .weather-card {
+    flex: 1;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    padding: 24px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    backdrop-filter: blur(10px);
+  }
+  .weather-card:hover { background: rgba(255,255,255,0.15); transform: translateY(-4px); }
+  .weather-card:active { transform: scale(0.95); }
+  .weather-card .icon { font-size: 40px; margin-bottom: 12px; }
+  .weather-card .label {
+    color: rgba(255,255,255,0.8);
+    font-size: 14px;
+    font-weight: 300;
+    letter-spacing: 2px;
+  }
+  .weather-card.selected {
+    border-color: rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.2);
+  }
+  .weather-card.faded { opacity: 0; transform: scale(0.8); pointer-events: none; }
+
+  /* Sentence selection */
+  .sentence-list {
+    display: flex; flex-direction: column;
+    gap: 12px; padding: 0 30px;
+    width: 100%;
+  }
+  .sentence-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 16px 20px;
+    color: rgba(255,255,255,0.75);
+    font-size: 15px;
+    font-weight: 300;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: left;
+  }
+  .sentence-btn:hover { background: rgba(255,255,255,0.15); }
+  .sentence-btn:active { transform: scale(0.97); }
+
+  /* Ball */
+  .emotion-ball {
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    position: absolute;
+    top: 20%; left: 50%; transform: translateX(-50%);
+    opacity: 0;
+    box-shadow: 0 0 20px rgba(255,255,255,0.3);
+    z-index: 15;
+  }
+  .emotion-ball.drop {
+    animation: ballDrop 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  @keyframes ballDrop {
+    0% { opacity: 0; top: 10%; transform: translateX(-50%) scale(0.3); }
+    30% { opacity: 1; }
+    100% { opacity: 1; top: 50%; transform: translateX(-50%) scale(1); }
+  }
+
+  /* Choice buttons */
+  .choice-area {
+    display: flex; gap: 16px;
+    padding: 0 24px; width: 100%;
+    margin-top: 60px;
+  }
+  .choice-btn {
+    flex: 1;
+    padding: 20px 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06);
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+  }
+  .choice-btn:hover { background: rgba(255,255,255,0.12); }
+  .choice-btn:active { transform: scale(0.95); }
+  .choice-btn .main-text {
+    color: rgba(255,255,255,0.9);
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  .choice-btn .sub-text {
+    color: rgba(255,255,255,0.4);
+    font-size: 12px;
+    font-weight: 300;
+    letter-spacing: 1px;
+  }
+
+  /* Ball fly animation */
+  .emotion-ball.to-bottle {
+    animation: flyToBottle 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+  @keyframes flyToBottle {
+    0% { top: 50%; left: 50%; transform: translateX(-50%) scale(1); }
+    50% { top: 40%; left: 70%; transform: translateX(-50%) scale(0.8); }
+    100% { top: 72%; left: 72%; transform: translateX(-50%) scale(0.4); opacity: 0.6; }
+  }
+  .emotion-ball.to-fire {
+    animation: flyToFire 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+  @keyframes flyToFire {
+    0% { top: 50%; left: 50%; transform: translateX(-50%) scale(1); }
+    50% { top: 55%; left: 50%; transform: translateX(-50%) scale(0.8); }
+    100% { top: 68%; left: 50%; transform: translateX(-50%) scale(0.2); opacity: 0; }
+  }
+
+  /* Feedback text */
+  .feedback-text {
+    position: absolute;
+    top: 42%;
+    left: 50%; transform: translateX(-50%);
+    color: rgba(255,255,255,0.8);
+    font-size: 18px;
+    font-weight: 300;
+    letter-spacing: 3px;
+    white-space: nowrap;
+    animation: feedbackFade 3s ease forwards;
+    z-index: 25;
+  }
+  @keyframes feedbackFade {
+    0% { opacity: 0; } 15% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; }
+  }
+
+  /* Shelf */
+  .shelf-screen {
+    background: linear-gradient(180deg, #1a1a2e 0%, #2d1f0e 100%);
+  }
+  .shelf-title {
+    color: rgba(255,255,255,0.5);
+    font-size: 14px;
+    letter-spacing: 3px;
+    margin-bottom: 30px;
+  }
+  .shelf-row {
+    display: flex; gap: 16px;
+    padding: 0 30px;
+    justify-content: center;
+  }
+  .shelf-bottle {
+    width: 55px; height: 85px;
+    position: relative;
+  }
+  .shelf-bottle .sb-neck {
+    width: 22px; height: 12px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    margin: 0 auto;
+    background: rgba(255,255,255,0.03);
+  }
+  .shelf-bottle .sb-body {
+    width: 42px; height: 55px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 0 0 8px 8px;
+    margin: 0 auto;
+    background: rgba(255,255,255,0.03);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    padding: 4px;
+    gap: 2px;
+  }
+  .shelf-bottle .sb-label {
+    text-align: center;
+    color: rgba(255,255,255,0.35);
+    font-size: 10px;
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+  .sb-ball {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Intro overlay */
+  .intro-overlay {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 50; cursor: pointer;
+    transition: opacity 0.5s;
+  }
+  .intro-overlay.hidden { opacity: 0; pointer-events: none; }
+  .intro-title {
+    color: rgba(255,255,255,0.9);
+    font-size: 24px;
+    font-weight: 300;
+    letter-spacing: 6px;
+    margin-bottom: 16px;
+  }
+  .intro-sub {
+    color: rgba(255,255,255,0.4);
+    font-size: 13px;
+    letter-spacing: 2px;
+  }
+  .intro-hint {
+    position: absolute;
+    bottom: 60px;
+    color: rgba(255,255,255,0.3);
+    font-size: 12px;
+    letter-spacing: 1px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 0.3; } 50% { opacity: 0.6; } }
+
+  /* Restart */
+  .restart-btn {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    color: rgba(255,255,255,0.5);
+    font-size: 12px;
+    padding: 6px 12px;
+    cursor: pointer;
+    z-index: 30;
+    transition: all 0.3s;
+  }
+  .restart-btn:hover { background: rgba(255,255,255,0.2); }
+
+  /* Particles for fire */
+  .fire-particle {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: particleRise 1s ease-out forwards;
+    z-index: 16;
+  }
+  @keyframes particleRise {
+    0% { opacity: 1; transform: translate(0,0) scale(1); }
+    100% { opacity: 0; transform: translate(var(--dx), -60px) scale(0.3); }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Background -->
+  <div class="sky" id="sky"></div>
+  <div class="stars" id="stars"></div>
+  <div class="rain-container" id="rain"></div>
+  <div class="lightning" id="lightning"></div>
+  <div class="ground"></div>
+  <div class="campfire">
+    <div class="fire-glow"></div>
+    <div class="flame"></div>
+    <div class="fire-base"></div>
+  </div>
+  <div class="bottle-area" id="bottleArea">
+    <div class="bottle-neck"></div>
+    <div class="bottle-body" id="bottleBody"></div>
+  </div>
+
+  <!-- Emotion Ball -->
+  <div class="emotion-ball" id="ball"></div>
+
+  <!-- Screen: Weather Selection -->
+  <div class="screen" id="screenWeather">
+    <div class="guide-text">幫天空選個樣子。</div>
+    <div class="weather-cards">
+      <div class="weather-card" data-weather="sunny" onclick="selectWeather('sunny')">
+        <div class="icon">☀️</div>
+        <div class="label">溫暖的風</div>
+      </div>
+      <div class="weather-card" data-weather="rainy" onclick="selectWeather('rainy')">
+        <div class="icon">🌧️</div>
+        <div class="label">雨的味道</div>
+      </div>
+      <div class="weather-card" data-weather="thunder" onclick="selectWeather('thunder')">
+        <div class="icon">⚡</div>
+        <div class="label">遠方雷聲</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen: Sentence Selection -->
+  <div class="screen" id="screenSentence">
+    <div class="guide-text" id="sentenceGuide"></div>
+    <div class="sentence-list" id="sentenceList"></div>
+  </div>
+
+  <!-- Screen: Choice (Bottle/Fire) -->
+  <div class="screen" id="screenChoice">
+    <div style="height:200px"></div>
+    <div class="choice-area">
+      <div class="choice-btn" onclick="choose('bottle')">
+        <div class="main-text">裝進瓶子</div>
+        <div class="sub-text">想記住</div>
+      </div>
+      <div class="choice-btn" onclick="choose('fire')">
+        <div class="main-text">投進火裡</div>
+        <div class="sub-text">釋放它</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen: Shelf -->
+  <div class="screen shelf-screen" id="screenShelf">
+    <div class="shelf-title">你的瓶子</div>
+    <div class="shelf-row" id="shelfRow"></div>
+    <div style="margin-top: 40px">
+      <div class="choice-btn" onclick="restart()" style="padding:14px 28px">
+        <div class="main-text" style="font-size:14px">再來一天</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Intro -->
+  <div class="intro-overlay" id="intro" onclick="startDemo()">
+    <div class="intro-title">情 緒 瓶</div>
+    <div class="intro-sub">Emotion Bottle</div>
+    <div class="intro-hint">點擊開始</div>
+  </div>
+
+  <div class="restart-btn" onclick="restart()" style="display:none" id="restartBtn">重來</div>
+</div>
+
+<script>
+const DATA = {
+  sunny: {
+    color: '#FFD700',
+    floatTexts: ['光落在肩膀上了。','暖暖的，剛剛好。','今天，有溫度。','曬一下也好。','光透過葉子了。'],
+    sentences: ['今天有一件小小的好事。','比想像中順利。','沒什麼特別的，但就是還不錯。','有人對我笑了一下。'],
+    guide: '寫下今天。'
+  },
+  rainy: {
+    color: '#4A7FB5',
+    floatTexts: ['讓它下吧。','不急。','安靜也很好。','什麼都不用做。','不必撐傘的那種雨。'],
+    sentences: ['不太想說話。','累了，但說不上為什麼。','有些事一直在想。','今天需要安靜一下。'],
+    guide: '記下此刻。'
+  },
+  thunder: {
+    color: '#9B59B6',
+    floatTexts: ['都感受到了。','夠響了。','隱約雷鳴。','天空深呼吸了一下。','只是雲在說話。'],
+    sentences: ['有一肚子話想說。','不公平。','受夠了。','為什麼事情會這樣。'],
+    guide: '說出來吧。'
+  }
+};
+
+const bottleFeedback = ['這一天被記住了。','不會忘記的。','好好待在這裡。'];
+const fireFeedback = ['感覺輕鬆了一點。','放下也可以。','火帶走了。'];
+
+let currentWeather = null;
+let bottleBalls = [];
+let shelfBottles = [
+  { balls: ['#FFD700','#FFD700','#4A7FB5','#9B59B6','#FFD700'], label: '3/10-3/16' },
+  { balls: ['#4A7FB5','#4A7FB5','#9B59B6'], label: '3/17-3/23' }
+];
+
+// Init stars
+function initStars() {
+  const c = document.getElementById('stars');
+  for (let i = 0; i < 30; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.left = Math.random()*100+'%';
+    s.style.top = Math.random()*100+'%';
+    s.style.animationDelay = Math.random()*2+'s';
+    s.style.width = s.style.height = (1+Math.random()*2)+'px';
+    c.appendChild(s);
+  }
+}
+
+// Init rain
+function initRain() {
+  const c = document.getElementById('rain');
+  for (let i = 0; i < 40; i++) {
+    const r = document.createElement('div');
+    r.className = 'raindrop';
+    r.style.left = Math.random()*100+'%';
+    r.style.height = (15+Math.random()*20)+'px';
+    r.style.animationDuration = (0.5+Math.random()*0.5)+'s';
+    r.style.animationDelay = Math.random()*2+'s';
+    c.appendChild(r);
+  }
+}
+
+function startDemo() {
+  document.getElementById('intro').classList.add('hidden');
+  document.getElementById('restartBtn').style.display = 'block';
+  setTimeout(() => {
+    document.getElementById('screenWeather').classList.add('active');
+  }, 300);
+}
+
+function selectWeather(w) {
+  currentWeather = w;
+  const sky = document.getElementById('sky');
+  sky.className = 'sky ' + w;
+
+  // Fade other cards
+  document.querySelectorAll('.weather-card').forEach(c => {
+    if (c.dataset.weather === w) c.classList.add('selected');
+    else c.classList.add('faded');
+  });
+
+  // Weather effects
+  if (w === 'rainy') document.getElementById('rain').classList.add('active');
+  if (w === 'thunder') {
+    setTimeout(() => doLightning(), 800);
+    setTimeout(() => doLightning(), 1500);
+  }
+
+  // Float text
+  const texts = DATA[w].floatTexts;
+  const text = texts[Math.floor(Math.random()*texts.length)];
+  setTimeout(() => showFloatText(text, '35%'), 800);
+
+  // Next screen
+  setTimeout(() => {
+    document.getElementById('screenWeather').classList.remove('active');
+    showSentenceScreen();
+  }, 3000);
+}
+
+function doLightning() {
+  const l = document.getElementById('lightning');
+  l.classList.add('flash');
+  setTimeout(() => l.classList.remove('flash'), 100);
+  setTimeout(() => { l.classList.add('flash'); setTimeout(() => l.classList.remove('flash'), 60); }, 200);
+}
+
+function showFloatText(text, top) {
+  const el = document.createElement('div');
+  el.className = 'float-text';
+  el.textContent = text;
+  el.style.top = top;
+  document.getElementById('app').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+function showSentenceScreen() {
+  const d = DATA[currentWeather];
+  document.getElementById('sentenceGuide').textContent = d.guide;
+  const list = document.getElementById('sentenceList');
+  list.innerHTML = '';
+  d.sentences.forEach(s => {
+    const btn = document.createElement('div');
+    btn.className = 'sentence-btn';
+    btn.textContent = s;
+    btn.onclick = () => selectSentence(s);
+    list.appendChild(btn);
+  });
+  document.getElementById('screenSentence').classList.add('active');
+}
+
+function selectSentence(s) {
+  document.getElementById('screenSentence').classList.remove('active');
+  // Drop ball
+  setTimeout(() => dropBall(), 500);
+}
+
+function dropBall() {
+  const ball = document.getElementById('ball');
+  ball.style.background = `radial-gradient(circle at 35% 35%, ${DATA[currentWeather].color}cc, ${DATA[currentWeather].color}88)`;
+  ball.style.boxShadow = `0 0 25px ${DATA[currentWeather].color}66`;
+  ball.className = 'emotion-ball drop';
+  ball.style.opacity = '0';
+
+  setTimeout(() => {
+    document.getElementById('screenChoice').classList.add('active');
+  }, 1200);
+}
+
+function choose(type) {
+  document.getElementById('screenChoice').classList.remove('active');
+  const ball = document.getElementById('ball');
+
+  if (type === 'bottle') {
+    ball.className = 'emotion-ball to-bottle';
+    bottleBalls.push(DATA[currentWeather].color);
+    updateBottle();
+    const fb = bottleFeedback[Math.floor(Math.random()*bottleFeedback.length)];
+    setTimeout(() => showFloatText(fb, '42%'), 1000);
+  } else {
+    ball.className = 'emotion-ball to-fire';
+    // Fire particles
+    setTimeout(() => spawnFireParticles(), 700);
+    const fb = fireFeedback[Math.floor(Math.random()*fireFeedback.length)];
+    setTimeout(() => showFloatText(fb, '42%'), 1000);
+  }
+
+  setTimeout(() => {
+    ball.className = 'emotion-ball';
+    ball.style.opacity = '0';
+    showShelf();
+  }, 3500);
+}
+
+function updateBottle() {
+  const body = document.getElementById('bottleBody');
+  body.innerHTML = '';
+  bottleBalls.forEach(c => {
+    const b = document.createElement('div');
+    b.className = 'bottle-ball';
+    b.style.background = `radial-gradient(circle at 35% 35%, ${c}cc, ${c}88)`;
+    b.style.width = '12px';
+    b.style.height = '12px';
+    b.style.position = 'relative';
+    b.style.left = (5+Math.random()*10)+'px';
+    body.appendChild(b);
+  });
+}
+
+function spawnFireParticles() {
+  const color = DATA[currentWeather].color;
+  for (let i = 0; i < 8; i++) {
+    const p = document.createElement('div');
+    p.className = 'fire-particle';
+    p.style.left = (45+Math.random()*10)+'%';
+    p.style.top = '70%';
+    p.style.width = p.style.height = (4+Math.random()*6)+'px';
+    p.style.background = color;
+    p.style.setProperty('--dx', (Math.random()*40-20)+'px');
+    p.style.animationDelay = (Math.random()*0.3)+'s';
+    document.getElementById('app').appendChild(p);
+    setTimeout(() => p.remove(), 1500);
+  }
+}
+
+function showShelf() {
+  // Build shelf
+  const row = document.getElementById('shelfRow');
+  row.innerHTML = '';
+  const allBottles = [...shelfBottles, { balls: [...bottleBalls], label: '3/24-now' }];
+  allBottles.forEach(b => {
+    const el = document.createElement('div');
+    el.className = 'shelf-bottle';
+    let ballsHTML = '';
+    b.balls.forEach(c => {
+      ballsHTML += `<div class="sb-ball" style="background:radial-gradient(circle at 35% 35%,${c}cc,${c}88)"></div>`;
+    });
+    el.innerHTML = `
+      <div class="sb-neck"></div>
+      <div class="sb-body">${ballsHTML}</div>
+      <div class="sb-label">${b.label}</div>
+    `;
+    row.appendChild(el);
+  });
+  document.getElementById('screenShelf').classList.add('active');
+}
+
+function restart() {
+  // Reset everything
+  currentWeather = null;
+  bottleBalls = [];
+  document.getElementById('sky').className = 'sky';
+  document.getElementById('rain').classList.remove('active');
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.weather-card').forEach(c => {
+    c.classList.remove('selected','faded');
+  });
+  const ball = document.getElementById('ball');
+  ball.className = 'emotion-ball';
+  ball.style.opacity = '0';
+  document.getElementById('bottleBody').innerHTML = '';
+  setTimeout(() => {
+    document.getElementById('screenWeather').classList.add('active');
+  }, 300);
+}
+
+initStars();
+initRain();
+</script>
+</body>
+</html>

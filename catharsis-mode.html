@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>煩惱清除戰 Demo</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: #1a1a2e;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  #app {
+    width: 390px; height: 844px;
+    position: relative;
+    overflow: hidden;
+    background: #2a1810;
+    border-radius: 20px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+  }
+  @media (max-width: 420px) {
+    #app { width: 100vw; height: 100vh; border-radius: 0; }
+  }
+
+  /* Game-like warm background */
+  .game-bg {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg, #3d2614 0%, #5a3a20 30%, #4a3018 60%, #2a1810 100%);
+  }
+  .game-bg::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle at 50% 80%, rgba(255,150,50,0.08) 0%, transparent 60%);
+  }
+
+  /* Warm ground texture */
+  .game-ground {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 35%;
+    background: linear-gradient(180deg, #3a2515 0%, #2a1a0e 100%);
+    border-top: 1px solid rgba(255,200,100,0.1);
+  }
+
+  /* Mint overlay */
+  .mint-overlay {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(178, 223, 219, 0);
+    transition: background 0.8s ease;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .mint-overlay.active {
+    background: rgba(178, 223, 219, 0.25);
+  }
+
+  /* Floating entry button */
+  .entry-btn {
+    position: absolute;
+    left: 20px; top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff6b35, #ff4444);
+    border: 2px solid rgba(255,255,255,0.3);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    cursor: pointer;
+    animation: breathe 2s ease-in-out infinite;
+    box-shadow: 0 4px 15px rgba(255,80,30,0.4);
+    transition: all 0.3s;
+  }
+  .entry-btn:active { transform: translateY(-50%) scale(0.9); }
+  .entry-btn .fist { font-size: 24px; }
+  .entry-btn .label {
+    font-size: 9px;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+  @keyframes breathe {
+    0%, 100% { transform: translateY(-50%) scale(1); }
+    50% { transform: translateY(-50%) scale(1.05); }
+  }
+
+  /* Fake game UI elements */
+  .fake-ui {
+    position: absolute; z-index: 3;
+  }
+  .fake-hp {
+    top: 30px; left: 20px; right: 20px;
+    height: 8px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .fake-hp-fill {
+    height: 100%; width: 72%;
+    background: linear-gradient(90deg, #4caf50, #8bc34a);
+    border-radius: 4px;
+  }
+  .fake-level {
+    top: 12px; left: 20px;
+    color: rgba(255,255,255,0.5);
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+  .fake-coins {
+    top: 12px; right: 20px;
+    color: rgba(255,200,50,0.6);
+    font-size: 11px;
+  }
+
+  /* Screens */
+  .screen {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.6s ease;
+    z-index: 10;
+  }
+  .screen.active { opacity: 1; pointer-events: auto; }
+
+  /* Tag selection screen */
+  .greeting {
+    color: rgba(255,255,255,0.9);
+    font-size: 22px;
+    font-weight: 300;
+    letter-spacing: 4px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    margin-bottom: 36px;
+    animation: fadeIn 0.5s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } }
+
+  .tag-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 0 32px;
+    width: 100%;
+    animation: fadeIn 0.8s ease;
+  }
+  .tag-grid .span2 { grid-column: span 1; }
+
+  .tag-btn {
+    background: rgba(178, 223, 219, 0.12);
+    border: 1px solid rgba(178, 223, 219, 0.25);
+    border-radius: 14px;
+    padding: 16px 8px;
+    color: rgba(255,255,255,0.85);
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    backdrop-filter: blur(5px);
+  }
+  .tag-btn:hover {
+    background: rgba(178, 223, 219, 0.25);
+    border-color: rgba(178, 223, 219, 0.5);
+    transform: translateY(-2px);
+  }
+  .tag-btn:active { transform: scale(0.93); }
+
+  /* Transition screen */
+  .transition-screen {
+    background: rgba(0,0,0,0.9);
+    z-index: 15;
+  }
+  .transition-tag {
+    color: #B2DFDB;
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: 8px;
+    text-shadow: 0 0 30px rgba(178,223,219,0.5);
+    animation: tagGrow 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes tagGrow {
+    from { transform: scale(0.3); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .transition-monster {
+    position: absolute;
+    font-size: 120px;
+    opacity: 0;
+    filter: brightness(0) drop-shadow(0 0 20px rgba(178,223,219,0.3));
+    animation: monsterReveal 0.4s 0.4s ease forwards;
+  }
+  @keyframes monsterReveal {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 0.7; transform: scale(1); }
+  }
+  .flash-white {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: white;
+    opacity: 0;
+    z-index: 16;
+    pointer-events: none;
+  }
+  .flash-white.active {
+    animation: flashPop 0.3s ease;
+  }
+  @keyframes flashPop {
+    0% { opacity: 0; }
+    30% { opacity: 0.9; }
+    100% { opacity: 0; }
+  }
+
+  /* Battle screen */
+  .battle-screen {
+    z-index: 11;
+    justify-content: flex-start;
+    padding-top: 60px;
+  }
+  .battle-field {
+    width: 100%; height: 100%;
+    position: relative;
+  }
+
+  /* Player character */
+  .player {
+    position: absolute;
+    bottom: 30%; left: 50%; transform: translateX(-50%);
+    width: 50px; height: 60px;
+    background: linear-gradient(180deg, #6ea8fe, #4a7fb5);
+    border-radius: 8px 8px 4px 4px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    animation: playerIdle 1s ease-in-out infinite;
+  }
+  .player::before {
+    content: ''; position: absolute;
+    top: -8px; left: 50%; transform: translateX(-50%);
+    width: 24px; height: 24px;
+    background: #ffd89b; border-radius: 50%;
+  }
+  .player-weapon {
+    position: absolute; top: 10px; right: -16px;
+    width: 8px; height: 30px;
+    background: linear-gradient(180deg, #ccc, #888);
+    border-radius: 2px;
+    transform: rotate(-20deg);
+  }
+  @keyframes playerIdle {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-4px); }
+  }
+
+  /* Enemy */
+  .enemy {
+    position: absolute;
+    width: 60px; height: 60px;
+    background: linear-gradient(180deg, #d32f2f, #b71c1c);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(211,47,47,0.3);
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+  }
+  .enemy:hover { transform: scale(1.05); }
+  .enemy:active { transform: scale(0.9); }
+  .enemy.hit {
+    animation: enemyHit 0.3s ease;
+  }
+  @keyframes enemyHit {
+    0% { transform: scale(1); filter: brightness(2); }
+    50% { transform: scale(0.8); }
+    100% { transform: scale(1); filter: brightness(1); }
+  }
+  .enemy.dead {
+    animation: enemyDie 0.5s ease forwards;
+  }
+  @keyframes enemyDie {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.5; }
+    100% { transform: scale(0); opacity: 0; }
+  }
+
+  /* Worry tag bubble */
+  .worry-bubble {
+    position: absolute;
+    top: -36px; left: 50%; transform: translateX(-50%);
+    background: rgba(178, 223, 219, 0.85);
+    color: #30201c;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 10px;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .worry-bubble::after {
+    content: '';
+    position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid rgba(178, 223, 219, 0.85);
+  }
+
+  /* Taunt bubble */
+  .taunt-bubble {
+    position: absolute;
+    top: -65px; left: 50%; transform: translateX(-50%);
+    background: rgba(255,255,255,0.92);
+    color: #333;
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 12px;
+    white-space: nowrap;
+    pointer-events: none;
+    animation: tauntIn 0.3s ease, tauntOut 0.5s 1.5s ease forwards;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  @keyframes tauntIn { from { opacity: 0; transform: translateX(-50%) translateY(8px); } }
+  @keyframes tauntOut { to { opacity: 0; transform: translateX(-50%) translateY(-8px); } }
+
+  /* Enemy HP bar */
+  .enemy-hp {
+    position: absolute;
+    top: -10px; left: 50%; transform: translateX(-50%);
+    width: 50px; height: 5px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .enemy-hp-fill {
+    height: 100%;
+    background: #f44336;
+    border-radius: 3px;
+    transition: width 0.3s;
+  }
+
+  /* Shatter effect */
+  .shatter-piece {
+    position: absolute;
+    color: #B2DFDB;
+    font-size: 18px;
+    font-weight: 700;
+    pointer-events: none;
+    z-index: 20;
+    text-shadow: 0 0 10px rgba(178,223,219,0.5);
+  }
+  .shatter-piece.fly {
+    animation: shatterFly 0.6s ease-out forwards;
+  }
+  @keyframes shatterFly {
+    0% { opacity: 1; transform: translate(0,0) rotate(0deg) scale(1); }
+    100% { opacity: 0; transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(0.3); }
+  }
+
+  /* Color restore pulse */
+  .color-restore {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 12;
+    animation: colorPulse 0.8s ease-out forwards;
+  }
+  @keyframes colorPulse {
+    0% { transform: translate(-50%,-50%) scale(0); opacity: 0.5;
+         background: radial-gradient(circle, rgba(255,200,100,0.3) 0%, transparent 70%); }
+    60% { opacity: 0.3; }
+    100% { transform: translate(-50%,-50%) scale(1); opacity: 0;
+           background: radial-gradient(circle, rgba(255,200,100,0.1) 0%, transparent 70%); }
+  }
+
+  /* Battle timer */
+  .battle-timer {
+    position: absolute; top: 50px;
+    left: 50%; transform: translateX(-50%);
+    color: rgba(255,255,255,0.6);
+    font-size: 14px;
+    letter-spacing: 2px;
+    z-index: 12;
+  }
+  .battle-kills {
+    position: absolute; top: 74px;
+    left: 50%; transform: translateX(-50%);
+    color: rgba(178,223,219,0.7);
+    font-size: 12px;
+    letter-spacing: 1px;
+    z-index: 12;
+  }
+
+  /* Buff indicator */
+  .buff-bar {
+    position: absolute; top: 96px;
+    left: 50%; transform: translateX(-50%);
+    display: flex; gap: 6px;
+    z-index: 12;
+  }
+  .buff-icon {
+    background: rgba(178,223,219,0.2);
+    border: 1px solid rgba(178,223,219,0.3);
+    border-radius: 6px;
+    padding: 3px 8px;
+    color: rgba(178,223,219,0.8);
+    font-size: 10px;
+  }
+
+  /* Settlement screen */
+  .settle-screen {
+    background: linear-gradient(180deg, rgba(26,26,46,0.95) 0%, rgba(45,31,14,0.95) 100%);
+    z-index: 20;
+  }
+  .settle-title {
+    font-size: 36px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 6px;
+    text-shadow: 0 0 20px rgba(178,223,219,0.3), 0 3px 6px rgba(0,0,0,0.5);
+    margin-bottom: 24px;
+    animation: settleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes settleIn { from { transform: scale(0); opacity: 0; } }
+
+  .settle-stats {
+    color: rgba(255,255,255,0.45);
+    font-size: 13px;
+    letter-spacing: 2px;
+    margin-bottom: 36px;
+    text-align: center;
+    line-height: 1.8;
+  }
+
+  .settle-quote {
+    color: rgba(255,255,255,0.8);
+    font-size: 18px;
+    font-weight: 300;
+    letter-spacing: 3px;
+    text-align: center;
+    padding: 0 40px;
+    line-height: 1.6;
+    margin-bottom: 12px;
+    animation: quoteFade 0.8s 0.5s ease both;
+  }
+  @keyframes quoteFade { from { opacity: 0; transform: translateY(10px); } }
+
+  .settle-reward {
+    color: rgba(255,255,255,0.25);
+    font-size: 12px;
+    letter-spacing: 1px;
+    margin-bottom: 50px;
+    animation: quoteFade 0.8s 0.8s ease both;
+  }
+
+  .settle-btns {
+    display: flex; gap: 16px;
+    padding: 0 40px; width: 100%;
+    animation: quoteFade 0.8s 1s ease both;
+  }
+  .settle-btn {
+    flex: 1;
+    padding: 16px;
+    border-radius: 14px;
+    border: none;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .settle-btn:active { transform: scale(0.95); }
+  .settle-btn.secondary {
+    background: #cabfc2;
+    color: #3a3a3a;
+  }
+  .settle-btn.primary {
+    background: #99e871;
+    color: #2a3a1a;
+  }
+
+  /* Intro */
+  .intro-overlay {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.75);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 50; cursor: pointer;
+    transition: opacity 0.5s;
+  }
+  .intro-overlay.hidden { opacity: 0; pointer-events: none; }
+  .intro-title {
+    color: rgba(255,255,255,0.9);
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 8px;
+    margin-bottom: 12px;
+  }
+  .intro-sub {
+    color: rgba(178,223,219,0.6);
+    font-size: 13px;
+    letter-spacing: 3px;
+  }
+  .intro-hint {
+    position: absolute; bottom: 60px;
+    color: rgba(255,255,255,0.3);
+    font-size: 12px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 0.3; } 50% { opacity: 0.6; } }
+
+  /* Battle flash */
+  .battle-flash {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: white; opacity: 0; pointer-events: none; z-index: 13;
+  }
+  .battle-flash.pop { animation: flashPop 0.15s ease; }
+
+  /* Kill text */
+  .kill-text {
+    position: absolute;
+    color: #B2DFDB;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-shadow: 0 0 15px rgba(178,223,219,0.5);
+    z-index: 14;
+    pointer-events: none;
+    animation: killTextUp 1s ease-out forwards;
+  }
+  @keyframes killTextUp {
+    0% { opacity: 1; transform: translate(-50%, 0) scale(1.2); }
+    100% { opacity: 0; transform: translate(-50%, -40px) scale(0.8); }
+  }
+
+  /* Restart */
+  .restart-btn {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    color: rgba(255,255,255,0.5);
+    font-size: 12px;
+    padding: 6px 12px;
+    cursor: pointer;
+    z-index: 30;
+  }
+
+  /* Battle hint */
+  .battle-hint {
+    position: absolute;
+    bottom: 10%;
+    left: 50%; transform: translateX(-50%);
+    color: rgba(255,255,255,0.3);
+    font-size: 12px;
+    letter-spacing: 1px;
+    z-index: 12;
+    animation: pulse 2s infinite;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Background -->
+  <div class="game-bg"></div>
+  <div class="game-ground"></div>
+  <div class="mint-overlay" id="mintOverlay"></div>
+  <div class="flash-white" id="flashWhite"></div>
+  <div class="battle-flash" id="battleFlash"></div>
+
+  <!-- Fake game UI -->
+  <div class="fake-ui fake-level" id="fakeUI1">Lv.42</div>
+  <div class="fake-ui fake-hp" id="fakeUI2"><div class="fake-hp-fill"></div></div>
+  <div class="fake-ui fake-coins" id="fakeUI3">💰 12,450</div>
+
+  <!-- Entry button -->
+  <div class="entry-btn" id="entryBtn" onclick="enterCatharsis()">
+    <span class="fist">👊</span>
+    <span class="label">打煩惱</span>
+  </div>
+
+  <!-- Screen: Tag Selection -->
+  <div class="screen" id="screenTags">
+    <div class="greeting">今天，什麼事讓你煩心？</div>
+    <div class="tag-grid">
+      <div class="tag-btn" onclick="selectTag('加班')">加班</div>
+      <div class="tag-btn" onclick="selectTag('老闆')">老闆</div>
+      <div class="tag-btn" onclick="selectTag('塞車')">塞車</div>
+      <div class="tag-btn" onclick="selectTag('失眠')">失眠</div>
+      <div class="tag-btn" onclick="selectTag('減肥')">減肥</div>
+      <div class="tag-btn" onclick="selectTag('焦慮')">焦慮</div>
+      <div class="tag-btn" onclick="selectTag('前任')">前任</div>
+      <div class="tag-btn" onclick="selectTag('已讀不回')">已讀不回</div>
+      <div class="tag-btn" onclick="selectTag('蚊子')">蚊子</div>
+      <div class="tag-btn" onclick="selectTag('WiFi斷線')">WiFi斷線</div>
+    </div>
+  </div>
+
+  <!-- Screen: Transition -->
+  <div class="screen transition-screen" id="screenTransition">
+    <div class="transition-tag" id="transTag"></div>
+    <div class="transition-monster" id="transMon">👹</div>
+  </div>
+
+  <!-- Screen: Battle -->
+  <div class="screen battle-screen" id="screenBattle">
+    <div class="battle-timer" id="battleTimer">02:47</div>
+    <div class="battle-kills" id="battleKills">消滅精英 ×0</div>
+    <div class="buff-bar">
+      <div class="buff-icon">⚔️ +15%</div>
+      <div class="buff-icon">⏱️ -10%</div>
+      <div class="buff-icon">🛡️ 護盾</div>
+    </div>
+    <div class="battle-field" id="battleField"></div>
+    <div class="battle-hint">點擊怪物攻擊</div>
+  </div>
+
+  <!-- Screen: Settlement -->
+  <div class="screen settle-screen" id="screenSettle">
+    <div class="settle-title" id="settleTitle"></div>
+    <div class="settle-stats" id="settleStats"></div>
+    <div class="settle-quote" id="settleQuote"></div>
+    <div class="settle-reward">順便拿了一些東西</div>
+    <div class="settle-btns">
+      <div class="settle-btn secondary" onclick="restart()">回去了</div>
+      <div class="settle-btn primary" onclick="goAgain()">再消滅一個</div>
+    </div>
+  </div>
+
+  <!-- Intro -->
+  <div class="intro-overlay" id="intro" onclick="startDemo()">
+    <div class="intro-title">煩 惱 清 除 戰</div>
+    <div class="intro-sub">Catharsis Mode</div>
+    <div class="intro-hint">點擊開始</div>
+  </div>
+
+  <div class="restart-btn" onclick="fullRestart()" style="display:none" id="restartBtn">重來</div>
+</div>
+
+<script>
+const TAGS = {
+  '加班': {
+    taunt: '你逃不掉加班的！',
+    weak: '不…今天不是應該我贏嗎…',
+    die: '加班…被打卡下班了…',
+    quotes: ['加班的事，明天再煩。今晚是你的。','報告寫不完，但你值得休息一下。']
+  },
+  '老闆': {
+    taunt: '這個月的 KPI 呢？',
+    weak: '等等…我們可以談談…',
+    die: '我只是…提個建議…',
+    quotes: ['KPI 不會因為你多想一秒就變好。先歇著。','會議結束了，真正的你可以回來了。']
+  },
+  '塞車': {
+    taunt: '哪裡都去不了喔～',
+    weak: '等等…你超車了…',
+    die: '路…通了…',
+    quotes: ['塞車已經結束了。至少在這裡不塞。','路通了。你也通了。']
+  },
+  '失眠': {
+    taunt: '還沒睡？不然想一下明天的事？',
+    weak: '你怎麼精神這麼好…',
+    die: '好吧…你睡吧…',
+    quotes: ['失眠的夜晚，至少你不是一個人。','不想睡的時候，就不要逼自己。']
+  },
+  '減肥': {
+    taunt: '今天的熱量還有剩喔～',
+    weak: '你真的不吃嗎…',
+    die: '好啦…明天再算…',
+    quotes: ['減肥明天開始也來得及。今天先開心。','你的價值不是體重秤說了算的。']
+  },
+  '焦慮': {
+    taunt: '你是不是忘了什麼事？',
+    weak: '好像…沒什麼好擔心的…',
+    die: '原來…可以不想…',
+    quotes: ['焦慮說到底，就是你太在乎。這不丟人。','想太多的人，通常也想得比別人深。']
+  },
+  '前任': {
+    taunt: '你不是說放下了嗎？',
+    weak: '行吧…我走…',
+    die: '這次…真的再見了。',
+    quotes: ['前任的事，就讓它留在上一關吧。','翻篇了。新的副本在前面。']
+  },
+  '已讀不回': {
+    taunt: '看到了，但我不想回。',
+    weak: '…好吧，我回就是了…',
+    die: '讀了…也回了…',
+    quotes: ['已讀不回？那你也不用秒回世界。','值得你在意的人，不會讓你等太久。']
+  },
+  '蚊子': {
+    taunt: '嗡～嗡～嗡～',
+    weak: '嗡…嗡？',
+    die: '啪。',
+    quotes: ['蚊子已伏法。正義得到伸張。','全世界最煩的聲音，已被你消音。']
+  },
+  'WiFi斷線': {
+    taunt: '連線中…連線中…失敗。',
+    weak: '訊號…恢復中…',
+    die: '已連線。',
+    quotes: ['WiFi 回來了嗎？沒有的話，至少這裡不斷線。','訊號滿格。心情也是。']
+  }
+};
+
+const GENERAL_QUOTES = [
+  '打完了，感覺好一點了吧？',
+  '不管怎樣，你今天出了一口氣。',
+  '煩惱被你揍扁了。你很棒。',
+  '世界還是那個世界，但你剛剛贏了一場。'
+];
+
+let currentTag = null;
+let killCount = 0;
+let enemies = [];
+let battleInterval = null;
+let timerSec = 167;
+
+function startDemo() {
+  document.getElementById('intro').classList.add('hidden');
+  document.getElementById('restartBtn').style.display = 'block';
+}
+
+function enterCatharsis() {
+  // Hide entry btn + fake UI
+  document.getElementById('entryBtn').style.display = 'none';
+  document.getElementById('fakeUI1').style.display = 'none';
+  document.getElementById('fakeUI2').style.display = 'none';
+  document.getElementById('fakeUI3').style.display = 'none';
+
+  // Mint overlay
+  document.getElementById('mintOverlay').classList.add('active');
+
+  // Show tags after color shift
+  setTimeout(() => {
+    document.getElementById('screenTags').classList.add('active');
+  }, 600);
+}
+
+function selectTag(tag) {
+  currentTag = tag;
+  killCount = 0;
+  document.getElementById('screenTags').classList.remove('active');
+
+  // Transition
+  setTimeout(() => {
+    const screen = document.getElementById('screenTransition');
+    document.getElementById('transTag').textContent = tag;
+    screen.classList.add('active');
+
+    // Monster + flash
+    setTimeout(() => {
+      document.getElementById('flashWhite').classList.add('active');
+      setTimeout(() => {
+        document.getElementById('flashWhite').classList.remove('active');
+        screen.classList.remove('active');
+        startBattle();
+      }, 300);
+    }, 900);
+  }, 200);
+}
+
+function startBattle() {
+  timerSec = 167;
+  killCount = 0;
+  document.getElementById('battleKills').textContent = '消滅精英 ×0';
+  document.getElementById('screenBattle').classList.add('active');
+  spawnEnemy(30, 25, 3);
+  spawnEnemy(65, 35, 3);
+  spawnEnemy(20, 45, 3);
+
+  // Show taunt for first enemy
+  setTimeout(() => {
+    const first = document.querySelector('.enemy');
+    if (first) showTaunt(first, TAGS[currentTag].taunt);
+  }, 500);
+
+  battleInterval = setInterval(() => {
+    timerSec--;
+    if (timerSec <= 0) endBattle();
+    const m = Math.floor(timerSec/60);
+    const s = timerSec%60;
+    document.getElementById('battleTimer').textContent =
+      String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }, 1000);
+
+  // Player
+  const field = document.getElementById('battleField');
+  const player = document.createElement('div');
+  player.className = 'player';
+  player.id = 'player';
+  const weapon = document.createElement('div');
+  weapon.className = 'player-weapon';
+  player.appendChild(weapon);
+  field.appendChild(player);
+}
+
+function spawnEnemy(xPct, yPct, hp) {
+  const field = document.getElementById('battleField');
+  const enemy = document.createElement('div');
+  enemy.className = 'enemy';
+  enemy.style.left = xPct + '%';
+  enemy.style.top = yPct + '%';
+  enemy.dataset.hp = hp;
+  enemy.dataset.maxHp = hp;
+  enemy.innerHTML = '👹';
+
+  // HP bar
+  const hpBar = document.createElement('div');
+  hpBar.className = 'enemy-hp';
+  hpBar.innerHTML = '<div class="enemy-hp-fill" style="width:100%"></div>';
+  enemy.appendChild(hpBar);
+
+  // Worry bubble
+  const bubble = document.createElement('div');
+  bubble.className = 'worry-bubble';
+  bubble.textContent = currentTag;
+  enemy.appendChild(bubble);
+
+  enemy.onclick = () => hitEnemy(enemy);
+  field.appendChild(enemy);
+  enemies.push(enemy);
+}
+
+function hitEnemy(enemy) {
+  if (enemy.dataset.dead === 'true') return;
+  let hp = parseInt(enemy.dataset.hp) - 1;
+  enemy.dataset.hp = hp;
+  const maxHp = parseInt(enemy.dataset.maxHp);
+  const fill = enemy.querySelector('.enemy-hp-fill');
+  fill.style.width = (hp/maxHp*100) + '%';
+
+  enemy.classList.remove('hit');
+  void enemy.offsetWidth;
+  enemy.classList.add('hit');
+
+  if (hp <= 1 && hp > 0) {
+    // Weak
+    showTaunt(enemy, TAGS[currentTag].weak);
+    fill.style.background = '#ff9800';
+  }
+
+  if (hp <= 0) {
+    killEnemy(enemy);
+  }
+}
+
+function showTaunt(enemy, text) {
+  // Remove existing taunts
+  enemy.querySelectorAll('.taunt-bubble').forEach(t => t.remove());
+  const taunt = document.createElement('div');
+  taunt.className = 'taunt-bubble';
+  taunt.textContent = text;
+  enemy.appendChild(taunt);
+  setTimeout(() => taunt.remove(), 2000);
+}
+
+function killEnemy(enemy) {
+  enemy.dataset.dead = 'true';
+  killCount++;
+  document.getElementById('battleKills').textContent = '消滅精英 ×' + killCount;
+
+  // Die taunt
+  showTaunt(enemy, TAGS[currentTag].die);
+
+  // Flash
+  const bf = document.getElementById('battleFlash');
+  bf.classList.remove('pop');
+  void bf.offsetWidth;
+  bf.classList.add('pop');
+
+  // Shatter
+  const rect = enemy.getBoundingClientRect();
+  const appRect = document.getElementById('app').getBoundingClientRect();
+  const cx = rect.left - appRect.left + rect.width/2;
+  const cy = rect.top - appRect.top - 20;
+  shatterText(currentTag, cx, cy);
+
+  // Color restore
+  spawnColorRestore(cx, cy);
+
+  // Kill text
+  const kt = document.createElement('div');
+  kt.className = 'kill-text';
+  kt.style.left = cx + 'px';
+  kt.style.top = (cy - 30) + 'px';
+  kt.textContent = '碎裂！';
+  document.getElementById('app').appendChild(kt);
+  setTimeout(() => kt.remove(), 1000);
+
+  // Enemy die
+  setTimeout(() => {
+    enemy.classList.add('dead');
+    setTimeout(() => {
+      enemy.remove();
+      enemies = enemies.filter(e => e !== enemy);
+      // Check if all dead
+      if (enemies.length === 0) {
+        if (killCount < 5) {
+          // Spawn more
+          setTimeout(() => {
+            spawnEnemy(25+Math.random()*50, 20+Math.random()*30, 3+Math.floor(killCount/2));
+            spawnEnemy(15+Math.random()*60, 25+Math.random()*30, 3+Math.floor(killCount/2));
+            setTimeout(() => {
+              const e = document.querySelector('.enemy');
+              if (e) showTaunt(e, TAGS[currentTag].taunt);
+            }, 300);
+          }, 800);
+        } else {
+          endBattle();
+        }
+      }
+    }, 500);
+  }, 200);
+}
+
+function shatterText(text, cx, cy) {
+  const chars = text.split('');
+  chars.forEach((c, i) => {
+    const el = document.createElement('div');
+    el.className = 'shatter-piece';
+    el.textContent = c;
+    el.style.left = cx + 'px';
+    el.style.top = cy + 'px';
+    const angle = (i / chars.length) * Math.PI * 2 + Math.random()*0.5;
+    const dist = 40 + Math.random()*40;
+    el.style.setProperty('--tx', Math.cos(angle)*dist + 'px');
+    el.style.setProperty('--ty', Math.sin(angle)*dist + 'px');
+    el.style.setProperty('--rot', (Math.random()*360-180) + 'deg');
+    document.getElementById('app').appendChild(el);
+    setTimeout(() => { el.classList.add('fly'); }, 10);
+    setTimeout(() => el.remove(), 700);
+  });
+}
+
+function spawnColorRestore(cx, cy) {
+  const el = document.createElement('div');
+  el.className = 'color-restore';
+  el.style.left = cx + 'px';
+  el.style.top = cy + 'px';
+  el.style.width = '300px';
+  el.style.height = '300px';
+  document.getElementById('app').appendChild(el);
+  setTimeout(() => el.remove(), 900);
+}
+
+function endBattle() {
+  if (battleInterval) { clearInterval(battleInterval); battleInterval = null; }
+  document.getElementById('screenBattle').classList.remove('active');
+  // Clean up
+  document.getElementById('battleField').innerHTML = '';
+  enemies = [];
+
+  // Show settlement
+  setTimeout(() => {
+    const t = TAGS[currentTag];
+    document.getElementById('settleTitle').textContent = `〔${currentTag}〕已消滅`;
+    document.getElementById('settleStats').innerHTML =
+      `消滅精英 ×${killCount} · 存活 ${167-timerSec} 秒 · 今日第 1 次`;
+
+    const allQuotes = [...t.quotes, ...GENERAL_QUOTES];
+    const quote = allQuotes[Math.floor(Math.random()*allQuotes.length)];
+    document.getElementById('settleQuote').textContent = `「${quote}」`;
+
+    document.getElementById('screenSettle').classList.add('active');
+  }, 500);
+}
+
+function goAgain() {
+  document.getElementById('screenSettle').classList.remove('active');
+  setTimeout(() => {
+    document.getElementById('screenTags').classList.add('active');
+  }, 300);
+}
+
+function restart() {
+  document.getElementById('screenSettle').classList.remove('active');
+  document.getElementById('mintOverlay').classList.remove('active');
+  setTimeout(() => {
+    document.getElementById('entryBtn').style.display = 'flex';
+    document.getElementById('fakeUI1').style.display = '';
+    document.getElementById('fakeUI2').style.display = '';
+    document.getElementById('fakeUI3').style.display = '';
+  }, 300);
+}
+
+function fullRestart() {
+  if (battleInterval) { clearInterval(battleInterval); battleInterval = null; }
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('mintOverlay').classList.remove('active');
+  document.getElementById('battleField').innerHTML = '';
+  enemies = [];
+  document.getElementById('entryBtn').style.display = 'flex';
+  document.getElementById('fakeUI1').style.display = '';
+  document.getElementById('fakeUI2').style.display = '';
+  document.getElementById('fakeUI3').style.display = '';
+}
+</script>
+</body>
+</html>
